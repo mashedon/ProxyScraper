@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<addon id="metadata.movie.proxy"
+       name="Proxy Scraper for Movie"
+       version="0.0.4"
+       provider-name="mashedon">
+  <requires>
+    <import addon="xbmc.metadata" version="1.0"/>
+  </requires>
+  <extension point="xbmc.metadata.scraper.movies"
+             language="ko"
+             library="movie-proxy.xml"
+             cachepersistence="00:15"/>
+  <extension point="xbmc.addon.metadata">
+    <summary lang="en">Proxy Server for Scraping Movie/TV Meta Data from Multi-source</summary>
+    <description lang="en">Proxy Server for Scraping Movie/TV Meta Data from Multi-source</description>
+    <platform>all</platform>
+    <email>mashedon@gmail.com</email>
+  </extension>
+</addon>

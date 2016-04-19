@@ -1,0 +1,5 @@
+v0.0.3
+- Added: support for using remote ScraperProxy
+
+v0.0.2
+- Added: support for scaping DAUM meta data

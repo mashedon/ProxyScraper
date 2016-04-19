@@ -1,0 +1,228 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<scraper framework="1.1" date="2016-04-01">
+
+	<NfoUrl dest="3">
+		<RegExp input="$$1" output="&lt;details&gt;&lt;url cache=&quot;daum_\2.json&quot;&gt;http://$INFO[host]/tv?id=daum\1&amp;amp;language=$INFO[language]&lt;/url&gt;&lt;id&gt;\2&lt;/id&gt;&lt;/details&gt;" dest="3">
+			<expression clear="yes" noclean="1">movie.daum.net[^\?]*\?tvProgramId=([0-9]+)</expression>
+		</RegExp>
+		<RegExp input="$$1" output="&lt;details&gt;&lt;url cache=&quot;tmdb_\2.json&quot;&gt;http://$INFO[host]/tv?id=tmdb\2&amp;amp;language=$INFO[language]&lt;/url&gt;&lt;id&gt;\2&lt;/id&gt;&lt;/details&gt;" dest="3">
+			<expression clear="yes" noclean="1">(themoviedb.org/tv/)([0-9]*)</expression>
+		</RegExp>
+	</NfoUrl>
+
+	<EpisodeGuideUrl dest="3">
+		<RegExp input="$$1" output="\1" dest="3">
+			<expression>(http://$INFO[host]/tv?id=[^&lt;]*)</expression>
+		</RegExp>
+	</EpisodeGuideUrl>
+
+	<!-- input:	$1=query string -->
+	<!-- input:	$2=year(?) -->
+	<!-- returns:	the url we should use to do the search -->
+	<CreateSearchUrl dest="3">
+		<RegExp input="$$1" output="&lt;url cache=&quot;search_\1$$10.json&quot;&gt;http://$INFO[host]/search/tv?query=\1&amp;amp;year=$$10&amp;amp;language=$INFO[language]&lt;/url&gt;" dest="3">
+			<RegExp input="$$2" output="_\1" dest="10">
+				<expression clear="yes">(.+)</expression>
+			</RegExp>
+			<expression/>
+		</RegExp>
+	</CreateSearchUrl>
+
+	<!-- input:	$1=html -->
+	<!-- input:	$2=search query -->
+	<!-- returns:	results in xml format <results><entity><title>*</title><year>*</year><language>*</language><id>*</id><url>*</url></entity>*</results> -->
+	<GetSearchResults dest="4">
+		<RegExp input="$$10" output="&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot; standalone=&quot;yes&quot;?&gt;&lt;results&gt;\1&lt;/results&gt;" dest="4">
+			<RegExp input="$$1" output="&lt;entity&gt;&lt;title&gt;\1&lt;/title&gt;&lt;year&gt;\2&lt;/year&gt;&lt;language&gt;\3&lt;/language&gt;&lt;id&gt;\4&lt;/id&gt;&lt;url cache=&quot;\4.json&quot;&gt;http://$INFO[host]/tv?id=\4&amp;amp;language=\3&lt;/url&gt;&lt;/entity&gt;" dest="10">
+				<expression repeat="yes">"title":"(.*?)","year":"(.*?)","language":"(.*?)","id":"(.*?)"</expression>
+			</RegExp>
+			<expression noclean="1"/>
+		</RegExp>
+	</GetSearchResults>
+
+	<!-- input:	$1=html -->
+	<!-- returns:	results in xml format <details><id>*</id><title>*</title>...</details> -->
+	<GetDetails dest="5">
+		<RegExp input="$$10" output="&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot; standalone=&quot;yes&quot;?&gt;&lt;details&gt;\1&lt;/details&gt;" dest="5">
+			<RegExp input="$$1" output="&lt;id&gt;\1&lt;/id&gt;" dest="10">
+				<expression noclean="1">"id":"(.*?)"</expression>
+			</RegExp>
+			<RegExp input="$$1" output="&lt;title&gt;\1&lt;/title&gt;" dest="10+">
+				<expression noclean="1">"title":"(.*?)"</expression>
+			</RegExp>
+			<RegExp input="$$1" output="&lt;originaltitle&gt;\1&lt;/originaltitle&gt;" dest="10+">
+				<expression noclean="1">"originaltitle":"(.*?)"</expression>
+			</RegExp>
+			<RegExp input="$$1" output="&lt;set&gt;\1&lt;/set&gt;" dest="10+">
+				<expression noclean="1">"set":"(.*?)"</expression>
+			</RegExp>
+			<RegExp input="$$1" output="&lt;year&gt;\1&lt;/year&gt;" dest="10+">
+				<expression noclean="1">"year":"(.*?)"</expression>
+			</RegExp>
+			<RegExp input="$$1" output="&lt;premiered&gt;\1&lt;/premiered&gt;" dest="10+">
+				<expression noclean="1">"premiered":"(.*?)"</expression>
+			</RegExp>
+			<RegExp input="$$1" output="&lt;runtime&gt;\1&lt;/runtime&gt;" dest="10+">
+				<expression noclean="1">"runtime":"(.*?)"</expression>
+			</RegExp>
+			<RegExp input="$$1" output="&lt;rating&gt;\1&lt;/rating&gt;" dest="10+">
+				<expression noclean="1">"rating":"(.*?)"</expression>
+			</RegExp>
+			<RegExp input="$$1" output="&lt;votes&gt;\1&lt;/votes&gt;" dest="10+">
+				<expression noclean="1">"votes":"(.*?)"</expression>
+			</RegExp>
+			<RegExp input="$$1" output="&lt;mpaa&gt;\1&lt;/mpaa&gt;" dest="10+">
+				<expression noclean="1">"mpaa":"(.*?)"</expression>
+			</RegExp>
+			<RegExp input="$$1" output="&lt;tagline&gt;\1&lt;/tagline&gt;" dest="10+">
+				<expression noclean="1">"tagline":"(.*?)"</expression>
+			</RegExp>
+			<RegExp input="$$1" output="&lt;outline&gt;\1&lt;/outline&gt;" dest="10+">
+				<expression noclean="1">"outline":"(.*?)"</expression>
+			</RegExp>
+			<RegExp input="$$1" output="&lt;plot&gt;\1&lt;/plot&gt;" dest="10+">
+				<expression noclean="1">"plot":"(.*?)"</expression>
+			</RegExp>
+			<RegExp input="$$11" output="&lt;thumb&gt;\1&lt;/thumb&gt;" dest="10+">
+				<RegExp input="$$1" output="\1" dest="11">
+					<expression>"thumb":\[(.*?)\]</expression>
+				</RegExp>
+				<expression repeat="yes">"(.*?)"</expression>
+			</RegExp>
+			<RegExp input="$$12" output="&lt;fanart&gt;\1&lt;/fanart&gt;" dest="10+">
+				<RegExp input="$$1" output="\1" dest="11">
+					<expression>"fanart":\[(.*?)\]</expression>
+				</RegExp>
+				<RegExp input="$$11" output="&lt;thumb&gt;\1&lt;/thumb&gt;" dest="12">
+					<expression repeat="yes">"thumb":"(.*?)"</expression>
+				</RegExp>
+				<expression noclean="1"/>
+			</RegExp>
+			<RegExp input="$$11" output="&lt;genre&gt;\1&lt;/genre&gt;" dest="10+">
+				<RegExp input="$$1" output="\1" dest="11">
+					<expression>"genre":\[(.*?)\]</expression>
+				</RegExp>
+				<expression repeat="yes">"(.*?)"</expression>
+			</RegExp>
+			<RegExp input="$$11" output="&lt;country&gt;\1&lt;/country&gt;" dest="10+">
+				<RegExp input="$$1" output="\1" dest="11">
+					<expression>"country":\[(.*?)\]</expression>
+				</RegExp>
+				<expression repeat="yes">"(.*?)"</expression>
+			</RegExp>
+			<RegExp input="$$11" output="&lt;studio&gt;\1&lt;/studio&gt;" dest="10+">
+				<RegExp input="$$1" output="\1" dest="11">
+					<expression>"studio":\[(.*?)\]</expression>
+				</RegExp>
+				<expression repeat="yes">"(.*?)"</expression>
+			</RegExp>
+			<RegExp input="$$11" output="&lt;director&gt;\1&lt;/director&gt;" dest="10+">
+				<RegExp input="$$1" output="\1" dest="11">
+					<expression>"director":\[(.*?)\]</expression>
+				</RegExp>
+				<expression repeat="yes">"(.*?)"</expression>
+			</RegExp>
+			<RegExp input="$$11" output="&lt;credits&gt;\1&lt;/credits&gt;" dest="10+">
+				<RegExp input="$$1" output="\1" dest="11">
+					<expression>"credits":\[(.*?)\]</expression>
+				</RegExp>
+				<expression repeat="yes">"(.*?)"</expression>
+			</RegExp>
+			<RegExp input="$$11" output="&lt;actor&gt;&lt;name&gt;\1&lt;/name&gt;&lt;role&gt;\2&lt;/role&gt;&lt;thumb&gt;\3&lt;/thumb&gt;&lt;/actor&gt;" dest="10+">
+				<RegExp input="$$1" output="\1" dest="11">
+					<expression>"actor":\[(.*?)\]</expression>
+				</RegExp>
+				<expression repeat="yes">{"name":"(.*?)","role":"(.*?)","thumb":"(.*?)"}</expression>
+			</RegExp>
+			<RegExp input="$$2" output="&lt;episodeguide&gt;&lt;url cache=&quot;\1_episodeguide.json&quot;&gt;http://$INFO[host]/tv/episode/all?id=\1&amp;amp;language=$INFO[language]&lt;/url&gt;&lt;/episodeguide&gt;" dest="10+">
+				<expression/>
+			</RegExp>
+			<expression noclean="1" />
+		</RegExp>
+	</GetDetails>
+
+	<!-- input:	$1=html !-->
+	<!-- input:	$2=series url !-->
+	<!-- returns:	results in xml format <episodeguide><episode><id>*</id><season>*</season><epnum>*</epnum><title>*</title><aired>*</aired><url>*</url></episode>*</episodeguide> !-->
+	<GetEpisodeList dest="3">
+		<RegExp input="$$10" output="&lt;episodeguide&gt;\1&lt;/episodeguide&gt;" dest="3">
+			<RegExp input="$$1" output="&lt;episode&gt;&lt;id&gt;\1&lt;/id&gt;&lt;season&gt;\2&lt;/season&gt;&lt;epnum&gt;\3&lt;/epnum&gt;&lt;title&gt;\4&lt;/title&gt;&lt;aired&gt;\5&lt;/aired&gt;&lt;url&gt;http://$INFO[host]/tv/episode?id=\1&amp;amp;sno=\2&amp;amp;eno=\3&amp;amp;language=$INFO[language]&lt;/url&gt;&lt;/episode&gt;" dest="10">
+				<expression repeat="yes">"id":"(.*?)","season":"(.*?)","epnum":"(.*?)","title":"(.*?)","aired":"(.*?)"</expression>
+			</RegExp>
+			<expression noclean="1"/>
+		</RegExp>
+	</GetEpisodeList>
+
+	<!-- input:	$1=html -->
+	<!-- input:	$2=id(?) !-->
+	<!-- returns:	results in xml format <details><id>*</id><season>*</season><episode>*</episode><title>*</title><aired>*</aired><plot>*</plot><plot>*</plot> -->
+	<GetEpisodeDetails dest="3">
+		<RegExp input="$$10" output="&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot; standalone=&quot;yes&quot;?&gt;&lt;details&gt;\1&lt;/details&gt;" dest="3">
+			<RegExp input="$$1" output="&lt;id&gt;\1&lt;/id&gt;" dest="10">
+				<expression noclean="1">"id":"(.*?)"</expression>
+			</RegExp>
+			<RegExp input="$$1" output="&lt;season&gt;\1&lt;/season&gt;" dest="10+">
+				<expression noclean="1">"season":"(.*?)"</expression>
+			</RegExp>
+			<RegExp input="$$1" output="&lt;episode&gt;\1&lt;/episode&gt;" dest="10+">
+				<expression noclean="1">"epnum":"(.*?)"</expression>
+			</RegExp>
+			<RegExp input="$$1" output="&lt;title&gt;\1&lt;/title&gt;" dest="10+">
+				<expression noclean="1">"title":"(.*?)"</expression>
+			</RegExp>
+			<RegExp input="$$1" output="&lt;aired&gt;\1&lt;/aired&gt;" dest="10+">
+				<expression noclean="1">"aired":"(.*?)"</expression>
+			</RegExp>
+			<RegExp input="$$1" output="&lt;uniqueid&gt;\1&lt;/uniqueid&gt;" dest="10+">
+				<expression noclean="1">"uniqueid":"(.*?)"</expression>
+			</RegExp>
+			<RegExp input="$$1" output="&lt;displayseason&gt;\1&lt;/displayseason&gt;" dest="10+">
+				<expression noclean="1">"displayseason":"(.*?)"</expression>
+			</RegExp>
+			<RegExp input="$$1" output="&lt;displayepisode&gt;\1&lt;/displayepisode&gt;" dest="10+">
+				<expression noclean="1">"displayepisode":"(.*?)"</expression>
+			</RegExp>
+			<RegExp input="$$1" output="&lt;displayafterseason&gt;\1&lt;/displayafterseason&gt;" dest="10+">
+				<expression noclean="1">"displayafterseason":"(.*?)"</expression>
+			</RegExp>
+			<RegExp input="$$1" output="&lt;runtime&gt;\1&lt;/runtime&gt;" dest="10+">
+				<expression noclean="1">"runtime":"(.*?)"</expression>
+			</RegExp>
+			<RegExp input="$$1" output="&lt;rating&gt;\1&lt;/rating&gt;" dest="10+">
+				<expression noclean="1">"rating":"(.*?)"</expression>
+			</RegExp>
+			<RegExp input="$$1" output="&lt;votes&gt;\1&lt;/votes&gt;" dest="10+">
+				<expression noclean="1">"votes":"(.*?)"</expression>
+			</RegExp>
+			<RegExp input="$$1" output="&lt;plot&gt;\1&lt;/plot&gt;" dest="10+">
+				<expression noclean="1">"plot":"(.*?)"</expression>
+			</RegExp>
+			<RegExp input="$$11" output="&lt;thumb&gt;\1&lt;/thumb&gt;" dest="10+">
+				<RegExp input="$$1" output="\1" dest="11">
+					<expression>"thumb":\[(.*?)\]</expression>
+				</RegExp>
+				<expression repeat="yes">"(.*?)"</expression>
+			</RegExp>
+			<RegExp input="$$11" output="&lt;director&gt;\1&lt;/director&gt;" dest="10+">
+				<RegExp input="$$1" output="\1" dest="11">
+					<expression>"director":\[(.*?)\]</expression>
+				</RegExp>
+				<expression repeat="yes">"(.*?)"</expression>
+			</RegExp>
+			<RegExp input="$$11" output="&lt;credits&gt;\1&lt;/credits&gt;" dest="10+">
+				<RegExp input="$$1" output="\1" dest="11">
+					<expression>"credits":\[(.*?)\]</expression>
+				</RegExp>
+				<expression repeat="yes">"(.*?)"</expression>
+			</RegExp>
+			<RegExp input="$$11" output="&lt;actor&gt;&lt;name&gt;\1&lt;/name&gt;&lt;role&gt;\2&lt;/role&gt;&lt;thumb&gt;\3&lt;/thumb&gt;&lt;/actor&gt;" dest="10+">
+				<RegExp input="$$1" output="\1" dest="11">
+					<expression>"actor":\[(.*?)\]</expression>
+				</RegExp>
+				<expression repeat="yes">{"name":"(.*?)","role":"(.*?)","thumb":"(.*?)"}</expression>
+			</RegExp>
+			<expression noclean="1"/>
+		</RegExp>
+	</GetEpisodeDetails>
+
+</scraper>

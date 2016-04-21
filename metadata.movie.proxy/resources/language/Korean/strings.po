@@ -21,5 +21,9 @@ msgid "Language Preference"
 msgstr "선호 언어"
 
 msgctxt "#30001"
-msgid "IP Address of ScraperProxy"
-msgstr "ScraperProxy IP주소"
+msgid "Meta Data Source"
+msgstr "메타 데이터를 가져올 사이트"
+
+msgctxt "#30002"
+msgid "IP Address of ProxyScraper"
+msgstr "ProxyScraper IP주소"

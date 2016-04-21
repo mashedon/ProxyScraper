@@ -17,6 +17,7 @@ from MockScraper import MockScraper
 from TMDBScraper import TMDBScraper
 try:
     import xbmc
+    __addonname__ = 'SCRPROXY_ADDON'
 except:
     print "standalone-mode"
 '''
@@ -28,7 +29,7 @@ Created on 2016. 3. 29.
 
 def log_dbg(txt):
     if ('__addonname__' in globals()):
-        message = '%s: %s' % (__addonname__, txt.encode('utf-8', 'ignore'))
+        message = ('{0}: {1}'.format(__addonname__, txt)).encode('utf-8','ignore')
         xbmc.log(msg=message, level=xbmc.LOGDEBUG)
     else:
         __logger__.debug(txt)        
@@ -36,7 +37,7 @@ def log_dbg(txt):
 
 def log_inf(txt):
     if ('__addonname__' in globals()):
-        message = '%s: %s' % (__addonname__, txt.encode('utf-8', 'ignore'))
+        message = ('{0}: {1}'.format(__addonname__, txt)).encode('utf-8','ignore')
         xbmc.log(msg=message, level=xbmc.LOGINFO)
     else:
         __logger__.info(txt)        
@@ -44,7 +45,7 @@ def log_inf(txt):
 
 def log_err(txt):
     if ('__addonname__' in globals()):
-        message = '%s: %s' % (__addonname__, txt.encode('utf-8', 'ignore'))
+        message = ('{0}: {1}'.format(__addonname__, txt)).encode('utf-8','ignore')
         xbmc.log(msg=message, level=xbmc.LOGERROR)
     else:
         __logger__.error(txt)        
@@ -62,41 +63,47 @@ class ScraperProxyHandler(BaseHTTPRequestHandler):
             for resultDict in listDict2['results']:
                 listDict1['results'].append(resultDict)
             listJson = json.dumps(listDict1, ensure_ascii=False, separators=(',', ':'))
-            log_inf(listJson)
             return listJson
         except Exception as e:
             log_err(str(e))
         
         
     # 영화 검색
-    def findMovies(self, query, year, lang):
+    def findMovies(self, query, year, lang, site):
         try:
             query = re.sub('[\.\[\]\-=:]', ' ', query)  # 특수문자 제거
             query = re.sub(' [ ]+', ' ', query)         # 연속된 공백은 공백 하나로 변경 
             query = query.strip().rstrip()              # 앞,뒤 공백 trim
             
-#             # 테스트
-#             return MockScraper(SVC_NAME).findMovies4Kodi(query, year, lang)
-            
-            # TMDB에서 검색
-            tmdbScraper = TMDBScraper(SVC_NAME)
-            tmdbListJson = tmdbScraper.findMovies4Kodi(query, year, lang)
- 
-            # Daum에서 검색
-            daumScraper = DaumScraper(SVC_NAME)
-            daumListJson = daumScraper.findMovies4Kodi(query, year, lang)
-             
-            if (tmdbListJson is not None) and (daumListJson is not None):
-                # 두 개의 검색 결과를 merge
-                return self.mergeList(tmdbListJson, daumListJson)
-            elif (tmdbListJson is not None):
-                return tmdbListJson
-            elif (daumListJson is not None):
-                return daumListJson
+            if (site == 'tmdb'):
+                # TMDB에서 검색
+                return TMDBScraper(SVC_NAME).findMovies4Kodi(query, year, lang) 
+            elif (site == 'daum'):
+                # Daum에서 검색
+                return DaumScraper(SVC_NAME).findMovies4Kodi(query, year, lang)
+            elif (site == 'dummy'):
+                # Dummy 검색결과 생성
+                return DummyScraper(SVC_NAME).findMovies4Kodi(query, year, lang)
+            elif (site == 'mock'):
+                # 테스트용
+                return MockScraper(SVC_NAME).findMovies4Kodi(query, year, lang)
             else:
-                # Dummy 리턴
-                dummyScraper = DummyScraper(SVC_NAME)
-                return dummyScraper.findMovies4Kodi(query, year, lang)
+                # TMDB에서 검색
+                tmdbListJson = TMDBScraper(SVC_NAME).findMovies4Kodi(query, year, lang)
+                # Daum에서 검색
+                daumListJson = DaumScraper(SVC_NAME).findMovies4Kodi(query, year, lang)
+            
+                if (tmdbListJson is not None) and (daumListJson is not None):
+                    # 두 개의 검색 결과를 merge
+                    return self.mergeList(tmdbListJson, daumListJson)
+                elif (tmdbListJson is not None):
+                    return tmdbListJson
+                elif (daumListJson is not None):
+                    return daumListJson
+                else:
+                    # Dummy 리턴
+                    return DummyScraper(SVC_NAME).findMovies4Kodi(query, year, lang)
+                    #return '{"error":"Nothing Found","query":"{0}"}'.format(query)
              
         except Exception as e:
             log_err(str(e))
@@ -105,60 +112,61 @@ class ScraperProxyHandler(BaseHTTPRequestHandler):
     # 영화 상세정보 조회
     def getMovieDetail(self, movieId, lang):
         try:
-#             # 테스트
-#             return MockScraper(SVC_NAME).getMovieDetail4Kodi(movieId, lang)
-
-            if movieId.startswith(DummyScraper.movieIdPrefix):
-                # Dummy 영화정보 생성
-                dummyScraper = DummyScraper(SVC_NAME)
-                movieJson = dummyScraper.getMovieDetail4Kodi(movieId, lang)
-                return movieJson
+            if movieId.startswith(TMDBScraper.movieIdPrefix) or movieId.startswith('tt') :
+                # TMDB 영화정보 조회
+                return TMDBScraper(SVC_NAME).getMovieDetail4Kodi(movieId, lang)
             elif movieId.startswith(DaumScraper.movieIdPrefix):
                 # Daum 영화정보 조회
-                daumScraper = DaumScraper(SVC_NAME)
-                movieJson = daumScraper.getMovieDetail4Kodi(movieId, lang)
-                return movieJson
-            elif movieId.startswith('tt') or movieId.startswith(TMDBScraper.movieIdPrefix):
-                # TMDB 영화정보 조회
-                tmdbScraper = TMDBScraper(SVC_NAME)
-                movieJson = tmdbScraper.getMovieDetail4Kodi(movieId, lang)
-                return movieJson
+                return DaumScraper(SVC_NAME).getMovieDetail4Kodi(movieId, lang)
+            elif movieId.startswith(DummyScraper.movieIdPrefix):
+                # Dummy 영화정보 생성
+                return DummyScraper(SVC_NAME).getMovieDetail4Kodi(movieId, lang)
+            elif movieId.startswith(MockScraper.movieIdPrefix):
+                # 테스트용
+                return MockScraper(SVC_NAME).getMovieDetail4Kodi(movieId, lang)
             else:
-                return ''
+                return '{"error":"Invalid Id","id":"{0}"}'.format(movieId)
     
         except Exception as e:
             log_err(str(e))
 
     
     # TV쇼 검색
-    def findTvShows(self, query, year, lang):
+    def findTvShows(self, query, year, lang, site):
         try:
             query = re.sub('[\.\[\]\-=:]', ' ', query)  # 특수문자 제거
             query = re.sub(' [ ]+', ' ', query)         # 연속된 공백은 공백 하나로 변경 
             query = query.strip().rstrip()              # 앞,뒤 공백 trim
             
-#             # 테스트
-#             return MockScraper(SVC_NAME).findTvShows4Kodi(query, year, lang)
-            
-            # TMDB에서 검색
-            tmdbScraper = TMDBScraper(SVC_NAME)
-            tmdbListJson = tmdbScraper.findTvShows4Kodi(query, year, lang)
-            
-            # Daum에서 검색
-            daumScraper = DaumScraper(SVC_NAME)
-            daumListJson = daumScraper.findTvShows4Kodi(query, year, lang)
-            
-            if (tmdbListJson is not None) and (daumListJson is not None):
-                # 두 개의 검색 결과를 merge
-                return self.mergeList(tmdbListJson, daumListJson)
-            elif (tmdbListJson is not None):
-                return tmdbListJson
-            elif (daumListJson is not None):
-                return daumListJson
+            if (site == 'tmdb'):
+                # TMDB에서 검색
+                return TMDBScraper(SVC_NAME).findTvShows4Kodi(query, year, lang)
+            elif (site == 'daum'):
+                # Daum에서 검색
+                return DaumScraper(SVC_NAME).findTvShows4Kodi(query, year, lang)
+            elif (site == 'dummy'):
+                # Dummy 검색결과 생성
+                return DummyScraper(SVC_NAME).findTvShows4Kodi(query, year, lang)
+            elif (site == 'mock'):
+                # 테스트용
+                return MockScraper(SVC_NAME).findTvShows4Kodi(query, year, lang)
             else:
-                # Dummy 리턴
-                dummyScraper = DummyScraper(SVC_NAME)
-                return dummyScraper.findMovies4Kodi(query, year, lang)
+                # TMDB에서 검색
+                tmdbListJson = TMDBScraper(SVC_NAME).findTvShows4Kodi(query, year, lang)
+                # Daum에서 검색
+                daumListJson = DaumScraper(SVC_NAME).findTvShows4Kodi(query, year, lang)
+                
+                if (tmdbListJson is not None) and (daumListJson is not None):
+                    # 두 개의 검색 결과를 merge
+                    return self.mergeList(tmdbListJson, daumListJson)
+                elif (tmdbListJson is not None):
+                    return tmdbListJson
+                elif (daumListJson is not None):
+                    return daumListJson
+                else:
+                    # Dummy 리턴
+                    #return DummyScraper(SVC_NAME).findTvShows4Kodi(query, year, lang)
+                    return '{"error":"Nothing Found","query":"{0}"}'.format(query)
             
         except Exception as e:
             log_err(str(e))
@@ -167,21 +175,17 @@ class ScraperProxyHandler(BaseHTTPRequestHandler):
     # TV쇼 상세정보 조회
     def getTvShowDetail(self, showId, lang):
         try:
-#             # 테스트
-#             return MockScraper(SVC_NAME).getTvShowDetail4Kodi(showId, lang)
-
             if showId.startswith(DaumScraper.showIdPrefix):
                 # Daum TV정보 조회
-                daumScraper = DaumScraper(SVC_NAME)
-                showJson = daumScraper.getTvShowDetail4Kodi(showId, lang)
-                return showJson
+                return DaumScraper(SVC_NAME).getTvShowDetail4Kodi(showId, lang)
             elif showId.startswith(TMDBScraper.showIdPrefix):
                 # TMDB TV정보 조회
-                tmdbMovieScraper = TMDBScraper(SVC_NAME)
-                showJson = tmdbMovieScraper.getTvShowDetail4Kodi(showId, lang)
-                return showJson
+                return TMDBScraper(SVC_NAME).getTvShowDetail4Kodi(showId, lang)
+            elif showId.startswith(MockScraper.showIdPrefix):
+                # 테스트용
+                return MockScraper(SVC_NAME).getTvShowDetail4Kodi(showId, lang)
             else:
-                return ''
+                return '{"error":"Invalid Id","id":"{0}"}'.format(showId)
     
         except Exception as e:
             log_err(str(e))
@@ -190,21 +194,17 @@ class ScraperProxyHandler(BaseHTTPRequestHandler):
     # TV쇼 에피소드목록 조회
     def getTvShowEpList(self, showId, lang):
         try:
-#             # 테스트
-#             return MockScraper(SVC_NAME).getTvShowEpList4Kodi(showId, lang)
-
-            if showId.startswith(DaumScraper.showIdPrefix):
-                # Daum TV 에피소드 목록 조회
-                daumScraper = DaumScraper(SVC_NAME)
-                showJson = daumScraper.getTvShowEpList4Kodi(showId, lang)
-                return showJson
-            elif showId.startswith(TMDBScraper.showIdPrefix):
+            if showId.startswith(TMDBScraper.showIdPrefix):
                 # TMDB TV 에피소드 목록 조회
-                tmdbScraper = TMDBScraper(SVC_NAME)
-                showJson = tmdbScraper.getTvShowEpList4Kodi(showId, lang)
-                return showJson
+                return TMDBScraper(SVC_NAME).getTvShowEpList4Kodi(showId, lang)
+            elif showId.startswith(DaumScraper.showIdPrefix):
+                # Daum TV 에피소드 목록 조회
+                return DaumScraper(SVC_NAME).getTvShowEpList4Kodi(showId, lang)
+            elif showId.startswith(MockScraper.showIdPrefix):
+                # 테스트용
+                return MockScraper(SVC_NAME).getTvShowEpList4Kodi(showId, lang)
             else:
-                return ''
+                return '{"error":"Invalid Id","id":"{0}"}'.format(showId)
     
         except Exception as e:
             log_err(str(e))
@@ -213,31 +213,37 @@ class ScraperProxyHandler(BaseHTTPRequestHandler):
     # TV쇼 에피소드목록 조회
     def getTvShowEpisode(self, showId, sno, eno, lang):
         try:
-#             # 테스트
-#             return MockScraper(SVC_NAME).getTvShowEpisode4Kodi(showId, sno, eno, lang)
-
-            if showId.startswith(DaumScraper.showIdPrefix):
-                # Daum TV 에피소드 조회
-                daumScraper = DaumScraper(SVC_NAME)
-                showJson = daumScraper.getTvShowEpisode4Kodi(showId, sno, eno, lang)
-                return showJson
-            elif showId.startswith(TMDBScraper.showIdPrefix):
+            if showId.startswith(TMDBScraper.showIdPrefix):
                 # TMDB TV 에피소드 조회
-                tmdbScraper = TMDBScraper(SVC_NAME)
-                showJson = tmdbScraper.getTvShowEpisode4Kodi(showId, sno, eno, lang)
-                return showJson
+                return TMDBScraper(SVC_NAME).getTvShowEpisode4Kodi(showId, sno, eno, lang)
+            elif showId.startswith(DaumScraper.showIdPrefix):
+                # Daum TV 에피소드 조회
+                return DaumScraper(SVC_NAME).getTvShowEpisode4Kodi(showId, sno, eno, lang)
+            elif showId.startswith(MockScraper.showIdPrefix):
+                # 테스트용
+                return MockScraper(SVC_NAME).getTvShowEpisode4Kodi(showId, sno, eno, lang)
             else:
-                return ''
+                return '{"error":"Invalid Id","id":"{0}"}'.format(showId)
     
         except Exception as e:
             log_err(str(e))
 
     
+    def sendErrMsg(self, errno):
+        try:
+            log_inf('Send response(code:404)')
+            self.send_error(errno)
+            
+        except Exception as e:
+            log_err(str(e))
+
+
     def sendRespMsg(self, resp):
         try:
             if (resp is None) or (resp == ''):
-                resp = '{"return":"none1"}'
+                resp = '{}'
             log_inf('Send response(code:200)')
+            log_inf(resp)
             self.send_response(200)
             self.send_header('content-type', 'application/json;charset=UTF-8')
             self.end_headers()
@@ -264,8 +270,7 @@ class ScraperProxyHandler(BaseHTTPRequestHandler):
                 self.wfile.write(resp)
                 self.end_headers()
             else:
-                log_inf('Send response(code:404)')
-                self.send_error(404)
+                self.sendErrMsg(404)
                     
         except Exception as e:
             log_err(str(e))
@@ -282,6 +287,7 @@ class ScraperProxyHandler(BaseHTTPRequestHandler):
             query = ''
             year = ''
             lang = 'ko'
+            site = 'all'
             entityId = ''
             sno = ''
             eno = ''
@@ -294,6 +300,9 @@ class ScraperProxyHandler(BaseHTTPRequestHandler):
             if 'language' in url_params:
                 lang = url_params['language'][0]
                 log_dbg('lang={0}'.format(lang))
+            if 'site' in url_params:
+                site = url_params['site'][0]
+                log_dbg('site={0}'.format(site))
             if 'id' in url_params:
                 entityId = url_params['id'][0]
                 log_dbg('id={0}'.format(entityId))
@@ -303,66 +312,58 @@ class ScraperProxyHandler(BaseHTTPRequestHandler):
             if 'eno' in url_params:
                 eno = url_params['eno'][0]
                 log_dbg('eno={0}'.format(eno))
-
+            
+            # 파라메터 값 검사
+            yearRegex = re.compile('[0-9]*')
+            if (year != '') and (not yearRegex.match(year)):
+                self.sendRespMsg('{"path":"%s"}' % format(self.path))
+                return
+            if (lang != 'ko') and (lang != 'en'):
+                self.sendRespMsg('{"path":"%s"}' % format(self.path))
+                return
+            
             if (o.path == '/search/movie'):
                 # 영화 검색
                 if len(query) > 0:
-                    resp = self.findMovies(query, year, lang)
+                    resp = self.findMovies(query, year, lang, site)
                     self.sendRespMsg(resp)
-                else:
-                    log_inf('Send response(code:404)')
-                    self.send_error(404)
-                return
+                    return
                 
             elif (o.path == '/movie'):
                 # 영화 상세정보 조회
                 if len(entityId) > 0:
                     resp = self.getMovieDetail(entityId, lang)
                     self.sendRespMsg(resp)
-                else:
-                    log_inf('Send response(code:404)')
-                    self.send_error(404)
-                return
+                    return
             
             elif (o.path == '/search/tv'):
                 # TV쇼 검색
                 if len(query) > 0:
-                    resp = self.findTvShows(query, year, lang)
+                    resp = self.findTvShows(query, year, lang, site)
                     self.sendRespMsg(resp)
-                else:
-                    log_inf('Send response(code:404)')
-                    self.send_error(404)
-                return
-                
+                    return
+            
             elif (o.path == '/tv'):
                 # TV시리즈 상세정보 조회
                 if len(entityId) > 0:
                     resp = self.getTvShowDetail(entityId, lang)
                     self.sendRespMsg(resp)
-                else:
-                    log_inf('Send response(code:404)')
-                    self.send_error(404)
-                return
+                    return
             
             elif (o.path == '/tv/episode/all'):
                 # 에피소드 목록 조회
                 if len(entityId) > 0:
+                    lang = 'ko'
                     resp = self.getTvShowEpList(entityId, lang)
                     self.sendRespMsg(resp)
-                else:
-                    log_inf('Send response(code:404)')
-                    self.send_error(404)
-                return
+                    return
             
             elif (o.path == '/tv/episode'):
                 # 에피소드 상세정보 조회
                 if len(entityId) > 0:
                     resp = self.getTvShowEpisode(entityId, sno, eno, lang)
                     self.sendRespMsg(resp)
-                else:
-                    log_inf('Send response(code:404)')
-                    self.send_error(404)
-                return
+                    return
             
             elif o.path.startswith('/image/'):
                 # 이미지 파일 전송
@@ -370,15 +371,10 @@ class ScraperProxyHandler(BaseHTTPRequestHandler):
                 log_dbg('fileName={0}'.format(fileName))
                 if len(fileName) > 0:
                     self.sendRespImage(fileName)
-                else:
-                    log_inf('Send response(code:404)')
-                    self.send_error(404)
-                return
-                    
-            else:
-                log_inf('Send response(code:404)')
-                self.send_error(404)
-                return
+                    return
+            
+            self.sendRespMsg('{"path":"%s"}' % format(self.path))
+            return
         
         except Exception as e:
             log_err(str(e))
@@ -386,17 +382,21 @@ class ScraperProxyHandler(BaseHTTPRequestHandler):
 
 if __name__ == '__main__':
     try:
-        __addonname__ = "ScraperProxy"
+        SVC_NAME = 'SCRPROXY'
+        PORT_NUMBER = 9990
+        if ('__addonname__' in globals()):
+            SVC_NAME = __addonname__
+            PORT_NUMBER = 8880
         
         # 기본 인코딩을 UTF-8로 변경
         reload(sys)
         sys.setdefaultencoding('utf-8')
         
         # Logger 초기화
-        SVC_NAME = 'SCRAPER_PROXY'
-        LOG_FORMAT = '[%(asctime)-15s][%(name)s][%(module)s:%(funcName)s][%(levelname)s] %(message)s'
+        #LOG_FORMAT = '[%(asctime)-15s][%(name)s][%(module)s:%(funcName)s][%(levelname)s] %(message)s'
+        LOG_FORMAT = '[%(asctime)-15s][%(name)s][%(levelname)s] %(message)s'
         #logFile = '{0}_{1}.log'.format(SVC_NAME, time.strftime('%Y%m%d')) 
-        #ogging.basicConfig(filename=logFile, format=LOG_FORMAT, level=logging.DEBUG)
+        #logging.basicConfig(filename=logFile, format=LOG_FORMAT, level=logging.DEBUG)
         logging.basicConfig(format=LOG_FORMAT, level=logging.DEBUG)
         __logger__ = logging.getLogger(SVC_NAME)
         
@@ -404,7 +404,6 @@ if __name__ == '__main__':
         
         #Create a web server and define the handler to manage the
         #incoming request
-        PORT_NUMBER = 8880
         server = HTTPServer(('', PORT_NUMBER), ScraperProxyHandler)
         log_inf("Started httpserver on port {0}".format(PORT_NUMBER))
         

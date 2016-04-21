@@ -21,5 +21,9 @@ msgid "Language Preference"
 msgstr ""
 
 msgctxt "#30001"
-msgid "IP Address of ScraperProxy"
+msgid "Meta Data Source"
+msgstr ""
+
+msgctxt "#30002"
+msgid "IP Address of ProxyScraper"
 msgstr ""

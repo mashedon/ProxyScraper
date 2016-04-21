@@ -21,6 +21,7 @@ class DummyScraper(MockScraper):
     classdocs
     '''
     movieIdPrefix = 'dummy_'
+    showIdPrefix = 'dummytv_'
     con = None
 
     
@@ -40,10 +41,10 @@ class DummyScraper(MockScraper):
             try:
                 cur.execute('CREATE TABLE TB_MOVIE (ID text, TITLE text, YEAR text)')
             except Exception as e: 
-                self.__log_err__(str(e))
+                pass
             
         except Exception as e: 
-            self.__log_err__(str(e))
+            self._log_err('{0}.{1}: {2}'.format(self.__class__.__name__, sys._getframe().f_code.co_name, str(e)))
         
     
     def __insertMovie(self, movieId, title, year):
@@ -53,11 +54,11 @@ class DummyScraper(MockScraper):
             sql = "INSERT INTO TB_MOVIE (ID, TITLE, YEAR) VALUES ('{0}','{1}','{2}')".format(movieId, title, year)
             cur.execute(sql)
             self.con.commit()
-            self.__log_dbg__('INSERT')
+            self._log_dbg('INSERT')
             return True
             
         except Exception as e: 
-            self.__log_err__(str(e))
+            self._log_err('{0}.{1}: {2}'.format(self.__class__.__name__, sys._getframe().f_code.co_name, str(e)))
             return False
     
         
@@ -71,7 +72,7 @@ class DummyScraper(MockScraper):
             return True
             
         except Exception as e: 
-            self.__log_err__(str(e))
+            self._log_err('{0}.{1}: {2}'.format(self.__class__.__name__, sys._getframe().f_code.co_name, str(e)))
             return False
     
         
@@ -82,11 +83,11 @@ class DummyScraper(MockScraper):
             sql = "SELECT ID, TITLE, YEAR FROM TB_MOVIE WHERE ID='{0}'".format(movieId)
             cur.execute(sql)
             movieVO = cur.fetchone()
-            self.__log_dbg__(movieVO)
+            self._log_dbg(movieVO)
             return movieVO
             
         except Exception as e: 
-            self.__log_err__(str(e))
+            self._log_err('{0}.{1}: {2}'.format(self.__class__.__name__, sys._getframe().f_code.co_name, str(e)))
     
 
     def __selectMovieByTitle(self, title):
@@ -96,11 +97,11 @@ class DummyScraper(MockScraper):
             sql = "SELECT ID, TITLE, YEAR FROM TB_MOVIE WHERE TITLE='{0}'".format(title)
             cur.execute(sql)
             movieVO = cur.fetchone()
-            self.__log_dbg__(movieVO)
+            self._log_dbg(movieVO)
             return movieVO
             
         except Exception as e: 
-            self.__log_err__(str(e))
+            self._log_err('{0}.{1}: {2}'.format(self.__class__.__name__, sys._getframe().f_code.co_name, str(e)))
     
         
     # 영화 검색
@@ -109,9 +110,9 @@ class DummyScraper(MockScraper):
             query = str(query)
             year = str(year)
             lang = str(lang)
-            self.__log_inf__('query={0}'.format(query))
-            self.__log_inf__('year={0}'.format(year))
-            self.__log_inf__('lang={0}'.format(lang))
+            self._log_dbg('query={0}'.format(query))
+            self._log_dbg('year={0}'.format(year))
+            self._log_dbg('lang={0}'.format(lang))
             
             movieVO = self.__selectMovieByTitle(query)
             if (movieVO is None):
@@ -133,11 +134,11 @@ class DummyScraper(MockScraper):
             kodiEntityDict['entity']['id'] = movieId
             kodiListDict['results'].append(kodiEntityDict)
             kodiListJson = json.dumps(kodiListDict, ensure_ascii=False, separators=(',', ':'))
-            self.__log_inf__(kodiListJson)
+            self._log_dbg(kodiListJson)
             return kodiListJson
         
         except Exception as e: 
-            self.__log_err__(str(e))
+            self._log_err('{0}.{1}: {2}'.format(self.__class__.__name__, sys._getframe().f_code.co_name, str(e)))
 
 
     # 영화 상세정보 조회
@@ -145,8 +146,8 @@ class DummyScraper(MockScraper):
         try:
             movieId = str(movieId)
             lang = str(lang)
-            self.__log_inf__('movieId={0}'.format(movieId))
-            self.__log_inf__('lang={0}'.format(lang))
+            self._log_dbg('movieId={0}'.format(movieId))
+            self._log_dbg('lang={0}'.format(lang))
             
             kodiMovieDict = json.loads(self.kodiDetailJson, object_pairs_hook=OrderedDict)
             movieVO = self.__selectMovie(movieId)
@@ -159,14 +160,14 @@ class DummyScraper(MockScraper):
                 kodiMovieDict['details']['year'] = year
                 kodiMovieDict['details']['plot'] = title
                 kodiMovieDict['details']['thumb'] = 'http://127.0.0.1/image/poster.jpg'
-                self.__log_dbg__(kodiMovieDict)
+                self._log_dbg(kodiMovieDict)
             
             kodiMovieJson = json.dumps(kodiMovieDict, ensure_ascii=False, separators=(',', ':'))
-            self.__log_inf__(kodiMovieJson)
+            self._log_dbg(kodiMovieJson)
             return kodiMovieJson
         
         except Exception as e: 
-            self.__log_err__(str(e))
+            self._log_err('{0}.{1}: {2}'.format(self.__class__.__name__, sys._getframe().f_code.co_name, str(e)))
 
 
 if __name__ == '__main__':
@@ -177,7 +178,8 @@ if __name__ == '__main__':
         
         # Logger 초기화
         SVC_NAME = 'DUMMY'
-        LOG_FORMAT = '[%(asctime)-15s][%(name)s][%(module)s:%(funcName)s][%(levelname)s] %(message)s'
+        #LOG_FORMAT = '[%(asctime)-15s][%(name)s][%(module)s:%(funcName)s][%(levelname)s] %(message)s'
+        LOG_FORMAT = '[%(asctime)-15s][%(name)s][%(levelname)s] %(message)s'
         #logFile = '{0}_{1}.log'.format(SVC_NAME, time.strftime('%Y%m%d')) 
         #logging.basicConfig(filename=logFile, format=LOG_FORMAT, level=logging.DEBUG)
         logging.basicConfig(format=LOG_FORMAT, level=logging.DEBUG)

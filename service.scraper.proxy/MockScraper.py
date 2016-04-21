@@ -26,11 +26,13 @@ class MockScraper(object):
     '''
     classdocs
     '''
+    movieIdPrefix = 'mock_'
+    showIdPrefix = 'mocktv_'
     logger = None
-    cacheDir = './cache'
+    cacheDir = 'cache'
     kodiListJson = '{"results":[]}'
     kodiEntityJson = '{"entity":{"title":"","year":"","language":"","id":""}}'
-    kodiDetailJson = '{"details":{"id":"","title":"","originaltitle":"","set":"","year":"","premiered":"","runtime":"","rating":"","votes":"","mpaa":"","tagline":"","outline":"","plot":"","thumb":[],"fanart":[],"genre":[],"country":[],"studio":[],"director":[],"credits":[],"actor":[]}}'
+    kodiDetailJson = '{"details":{"id":"","title":"","originaltitle":"","set":"","year":"","premiered":"","language":"","runtime":"","rating":"","votes":"","mpaa":"","tagline":"","outline":"","plot":"","thumb":[],"fanart":[],"genre":[],"country":[],"studio":[],"director":[],"credits":[],"actor":[]}}'
     kodiFanartJson = '{"thumb":""}'
     kodiActorJson = '{"name":"","role":"","thumb":""}'
     kodiEpListJson = '{"episodeguide":[]}'
@@ -43,49 +45,58 @@ class MockScraper(object):
         Constructor
         '''
         self.logger = logging.getLogger(loggerName)
+        if (self.logger.name.endswith('ADDON')):
+            self.cacheDir = os.path.join(xbmc.translatePath('special://temp'), 'service.scraper.proxy')
+        self._log_dbg(self.cacheDir)
+            
+        try:
+            if (not os.path.isdir(self.cacheDir)):
+                os.mkdir(self.cacheDir)
+        except:
+            pass
 
 
-    def __log_dbg__(self, txt):
-        if ('__addonname__' in globals()):
-            message = '%s: %s' % (__addonname__, txt.encode('utf-8', 'ignore'))
+    def _log_dbg(self, txt):
+        if (self.logger.name.endswith('ADDON')):
+            message = ('{0}: {1}'.format(self.logger.name, txt)).encode('utf-8','ignore')
             xbmc.log(msg=message, level=xbmc.LOGDEBUG)
         else:
             self.logger.debug(txt)
         
 
-    def __log_inf__(self, txt):
-        if ('__addonname__' in globals()):
-            message = '%s: %s' % (__addonname__, txt.encode('utf-8', 'ignore'))
+    def _log_inf(self, txt):
+        if (self.logger.name.endswith('ADDON')):
+            message = ('{0}: {1}'.format(self.logger.name, txt)).encode('utf-8','ignore')
             xbmc.log(msg=message, level=xbmc.LOGINFO)
         else:
             self.logger.info(txt)
         
 
-    def __log_err__(self, txt):
-        if ('__addonname__' in globals()):
-            message = '%s: %s' % (__addonname__, txt.encode('utf-8', 'ignore'))
+    def _log_err(self, txt):
+        if (self.logger.name.endswith('ADDON')):
+            message = ('{0}: {1}'.format(self.logger.name, txt)).encode('utf-8','ignore')
             xbmc.log(msg=message, level=xbmc.LOGERROR)
         else:
             self.logger.error(txt)
 
         
-    def __dict2json__(self, objDict):
+    def _dict2json(self, objDict):
         try:
             return json.dumps(objDict, ensure_ascii=False, separators=(',', ':'))
         except Exception as e: 
-            self.__log_err__(str(e))
+            self._log_err('{0}.{1}: {2}'.format(self.__class__.__name__, sys._getframe().f_code.co_name, str(e)))
             return ''
     
     
-    def __json2dict__(self, strJson):
+    def _json2dict(self, strJson):
         try:
             return json.loads(strJson, object_pairs_hook=OrderedDict) 
         except Exception as e: 
-            self.__log_err__(str(e))
+            self._log_err('{0}.{1}: {2}'.format(self.__class__.__name__, sys._getframe().f_code.co_name, str(e)))
             return None
     
     
-    def __html_escape__(self, text):
+    def _html_escape(self, text):
         html_escape_table = {
             "&": "&amp;",
             '"': "&quot;",
@@ -98,22 +109,22 @@ class MockScraper(object):
         return "".join(html_escape_table.get(c,c) for c in text)
     
 
-    def __tag_strip__(self, html):
+    def _tag_strip(self, html):
         TAG_RE = re.compile(r'<[^>]+>')
         text = TAG_RE.sub('', html)
         return text
 
 
-    def __plot_escape__(self, plot):
+    def _plot_escape(self, plot):
         plot = re.sub('\\\"', '&quot;', plot)
         plot = re.sub('[\r\n]+', ' ', plot)
-        plot = re.sub('<br>', ' ', plot)
+        plot = re.sub('<br>', '\n', plot)
         plot = re.sub('<[^<]+?>', '', plot)  # strip html tags
         plot = re.sub('  +', ' ', plot)
         return plot
         
         
-    def __regex_find__(self, regexStr, text, option = None):
+    def _regex_find(self, regexStr, text, option = None):
         try:
             if option:
                 return re.search(regexStr, text, option).group(1)
@@ -123,7 +134,7 @@ class MockScraper(object):
             return ''
     
     
-    def __regex_findall__(self, regexStr, text, option = None):
+    def _regex_findall(self, regexStr, text, option = None):
         try:
             if option:
                 return re.findall(regexStr, text, option)
@@ -133,27 +144,38 @@ class MockScraper(object):
             return []
 
 
-    def __cache_write__(self, cache, msg):
+    def _title_format(self, eno, lang):
         try:
-            if (cache is None):
+            if (lang == 'ko'):
+                return '제 {0}화'.format(eno)
+            else:
+                return 'Episode {0}'.format(eno)
+            
+        except Exception as e:
+            return ''
+        
+        
+    def __cache_write(self, cacheName, msg):
+        try:
+            if (cacheName is None):
                 return
             
-            filename = '{0}/{1}'.format(self.cacheDir, cache)
-            self.__log_dbg__(filename)
+            filename = os.path.join(self.cacheDir, cacheName)
+            self._log_dbg('_cache_write: {0}'.format(filename))
             f = open(filename,'wb')
             f.write(msg)
             f.close()
         except Exception as e: 
-            self.__log_err__(str(e))
+            pass
 
     
-    def __cache_read__(self, cache):
+    def __cache_read(self, cacheName):
         try:
-            if (cache is None):
+            if (cacheName is None):
                 return ''
             
-            filename = '{0}/{1}'.format(self.cacheDir, cache)
-            self.__log_dbg__(filename)
+            filename = '{0}/{1}'.format(self.cacheDir, cacheName)
+            self._log_dbg('_cache_read: {0}'.format(filename))
             
             # 캐시 파일이 15분 안에 생성되었다면 재사용
             if os.path.isfile(filename):
@@ -168,34 +190,33 @@ class MockScraper(object):
             
             return ''
         except Exception as e: 
-            self.__log_err__(str(e))
             return ''
 
     
-    def __wget__(self, url, cache=None):
+    def _wget(self, url, cacheName=None):
         try:
-            self.__log_inf__('Open : {0}'.format(url))
+            self._log_dbg('_wget: {0}'.format(url))
             
-            body = self.__cache_read__(cache)
+            body = self.__cache_read(cacheName)
             if (body is not None) and (len(body) > 0):
-                self.__log_inf__('Cache hit! : {0}'.format(cache))
+                self._log_dbg('_wget: cache hit! ({0})'.format(cacheName))
                 return body
             
             resp = urllib2.urlopen(url)
             body = resp.read()
-            self.__cache_write__(cache, body)
+            self.__cache_write(cacheName, body)
             return body
         
         except urllib2.HTTPError as e:
             # HTTP-specific error (e.g. 404:FileNotFound)
-            self.__log_err__(str(e))
+            self._log_err('{0}.{1}: {2}'.format(self.__class__.__name__, sys._getframe().f_code.co_name, str(e)))
             
         except urllib2.URLError as e:
             # Not an HTTP-specific error (e.g. connection refused)
-            self.__log_err__(str(e))
+            self._log_err('{0}.{1}: {2}'.format(self.__class__.__name__, sys._getframe().f_code.co_name, str(e)))
             
         except Exception as e: 
-            self.self.__log_err__(str(e))
+            self._log_err('{0}.{1}: {2}'.format(self.__class__.__name__, sys._getframe().f_code.co_name, str(e)))
             
 
     # 영화 검색
@@ -203,7 +224,7 @@ class MockScraper(object):
         try:
             kodiListDict = json.loads(self.kodiListJson, object_pairs_hook=OrderedDict)
             entityDictTemplate = json.loads(self.kodiEntityJson, object_pairs_hook=OrderedDict)
-            self.__log_dbg__(kodiListDict)
+            self._log_dbg(kodiListDict)
             
             entityDict = copy.deepcopy(entityDictTemplate)
             entityDict['entity']['title'] = '매트릭스'
@@ -213,11 +234,11 @@ class MockScraper(object):
             kodiListDict['results'].append(entityDict)
             
             kodiListJson = json.dumps(kodiListDict, ensure_ascii=False, separators=(',', ':'))
-            self.__log_inf__(kodiListJson)
+            self._log_dbg(kodiListJson)
             return kodiListJson
         
         except Exception as e: 
-            self.__log_err__(str(e))
+            self._log_err('{0}.{1}: {2}'.format(self.__class__.__name__, sys._getframe().f_code.co_name, str(e)))
 
 
     # 영화 상세정보 조회
@@ -226,7 +247,7 @@ class MockScraper(object):
             kodiDetailDict = json.loads(self.kodiDetailJson, object_pairs_hook=OrderedDict)
             fanartDictTemplate = json.loads(self.kodiFanartJson, object_pairs_hook=OrderedDict)
             actorDictTemplate = json.loads(self.kodiActorJson, object_pairs_hook=OrderedDict)
-            self.__log_dbg__(kodiDetailDict)
+            self._log_dbg(kodiDetailDict)
             
             detailsDict = kodiDetailDict['details'] 
             detailsDict['id'] = '603'
@@ -303,11 +324,11 @@ class MockScraper(object):
             detailsDict['actor'].append(actorDict)
             
             kodiMovieDetailJson = json.dumps(kodiDetailDict, ensure_ascii=False, separators=(',', ':'))
-            self.__log_inf__(kodiMovieDetailJson)
+            self._log_dbg(kodiMovieDetailJson)
             return kodiMovieDetailJson
         
         except Exception as e: 
-            self.__log_err__(str(e))
+            self._log_err('{0}.{1}: {2}'.format(self.__class__.__name__, sys._getframe().f_code.co_name, str(e)))
 
 
     # 영화 검색
@@ -315,7 +336,7 @@ class MockScraper(object):
         try:
             kodiListDict = json.loads(self.kodiListJson, object_pairs_hook=OrderedDict)
             entityDictTemplate = json.loads(self.kodiEntityJson, object_pairs_hook=OrderedDict)
-            self.__log_dbg__(kodiListDict)
+            self._log_dbg(kodiListDict)
             
             entityDict = copy.deepcopy(entityDictTemplate)
             entityDict['entity']['title'] = '왕좌의 게임'
@@ -325,11 +346,11 @@ class MockScraper(object):
             kodiListDict['results'].append(entityDict)
             
             kodiListJson = json.dumps(kodiListDict, ensure_ascii=False, separators=(',', ':'))
-            self.__log_inf__(kodiListJson)
+            self._log_dbg(kodiListJson)
             return kodiListJson
         
         except Exception as e: 
-            self.__log_err__(str(e))
+            self._log_err('{0}.{1}: {2}'.format(self.__class__.__name__, sys._getframe().f_code.co_name, str(e)))
 
 
     # TV쇼 상세정보 조회
@@ -338,7 +359,7 @@ class MockScraper(object):
             kodiDetailDict = json.loads(self.kodiDetailJson, object_pairs_hook=OrderedDict)
             fanartDictTemplate = json.loads(self.kodiFanartJson, object_pairs_hook=OrderedDict)
             actorDictTemplate = json.loads(self.kodiActorJson, object_pairs_hook=OrderedDict)
-            self.__log_dbg__(kodiDetailDict)
+            self._log_dbg(kodiDetailDict)
             
             detailsDict = kodiDetailDict['details'] 
             detailsDict['id'] = '58449'
@@ -408,11 +429,11 @@ class MockScraper(object):
             detailsDict['actor'].append(actorDict)
             
             kodiDetailJson = json.dumps(kodiDetailDict, ensure_ascii=False, separators=(',', ':'))
-            self.__log_inf__(kodiDetailJson)
+            self._log_dbg(kodiDetailJson)
             return kodiDetailJson
         
         except Exception as e: 
-            self.__log_err__(str(e))
+            self._log_err('{0}.{1}: {2}'.format(self.__class__.__name__, sys._getframe().f_code.co_name, str(e)))
 
 
     # 에피소드 목록 조회
@@ -420,7 +441,7 @@ class MockScraper(object):
         try:
             kodiEpListDict = json.loads(self.kodiEpListJson, object_pairs_hook=OrderedDict)
             epDictTemplate = json.loads(self.kodiEpJson, object_pairs_hook=OrderedDict)
-            self.__log_dbg__(kodiEpListDict)
+            self._log_dbg(kodiEpListDict)
                         
             epDict = copy.deepcopy(epDictTemplate)
             epDict['episode']['id'] = str(showId)
@@ -450,11 +471,11 @@ class MockScraper(object):
             kodiEpListDict['episodeguide'].append(epDict)
             
             kodiEpListJson = json.dumps(kodiEpListDict, ensure_ascii=False, separators=(',', ':'))
-            self.__log_inf__(kodiEpListJson)
+            self._log_dbg(kodiEpListJson)
             return kodiEpListJson
             
         except Exception as e: 
-            self.__log_err__(str(e))
+            self._log_err('{0}.{1}: {2}'.format(self.__class__.__name__, sys._getframe().f_code.co_name, str(e)))
 
 
     # 에피소드 상세정보 조회
@@ -489,11 +510,11 @@ class MockScraper(object):
             detailsDict['actor'].append(actorDict)
             
             kodiEpDetailJson = json.dumps(kodiEpDetailDict, ensure_ascii=False, separators=(',', ':'))
-            self.__log_inf__(kodiEpDetailJson)
+            self._log_dbg(kodiEpDetailJson)
             return kodiEpDetailJson
         
         except Exception as e: 
-            self.__log_err__(str(e))
+            self._log_err('{0}.{1}: {2}'.format(self.__class__.__name__, sys._getframe().f_code.co_name, str(e)))
 
 
 if __name__ == '__main__':
@@ -504,33 +525,34 @@ if __name__ == '__main__':
         
         # Logger 초기화
         SVC_NAME = 'MOCK'
-        LOG_FORMAT = '[%(asctime)-15s][%(name)s][%(module)s:%(funcName)s][%(levelname)s] %(message)s'
+        #LOG_FORMAT = '[%(asctime)-15s][%(name)s][%(module)s:%(funcName)s][%(levelname)s] %(message)s'
+        LOG_FORMAT = '[%(asctime)-15s][%(name)s][%(levelname)s] %(message)s'
         #logFile = '{0}_{1}.log'.format(SVC_NAME, time.strftime('%Y%m%d')) 
         #logging.basicConfig(filename=logFile, format=LOG_FORMAT, level=logging.DEBUG)
         logging.basicConfig(format=LOG_FORMAT, level=logging.DEBUG)
         logger = logging.getLogger(SVC_NAME)
         logger.info('==[STARTED]======================================')
         
-    #     # 영화 검색
-    #     query = '배트맨 대 슈퍼맨'
-    #     year = ''
-    #     lang = 'ko'
-    #     scraper = MockScraper(SVC_NAME)
-    #     listJson = scraper.findMovies4Kodi(query, year, lang)
-    #     logger.debug('')
-    #      
-    #     listDict = json.loads(listJson, object_pairs_hook=OrderedDict)
-    #     logger.debug(listDict)
-    #     for resultDict in listDict['results']:
-    #         # 검색결과에서 영화ID 추출
-    #         movieId = resultDict['entity']['id']
-    #         logger.debug('movieId={0}'.format(movieId))
-    #         title = resultDict['entity']['title']
-    #         logger.debug('title={0}'.format(title))
-    #          
-    #         # 상세정보 조회
-    #         detailJson = scraper.getMovieDetail4Kodi(movieId, lang)
-    #         logger.debug('')
+        # 영화 검색
+        query = '배트맨 대 슈퍼맨'
+        year = ''
+        lang = 'ko'
+        scraper = MockScraper(SVC_NAME)
+        listJson = scraper.findMovies4Kodi(query, year, lang)
+        logger.debug('')
+          
+        listDict = json.loads(listJson, object_pairs_hook=OrderedDict)
+        logger.debug(listDict)
+        for resultDict in listDict['results']:
+            # 검색결과에서 영화ID 추출
+            movieId = resultDict['entity']['id']
+            logger.debug('movieId={0}'.format(movieId))
+            title = resultDict['entity']['title']
+            logger.debug('title={0}'.format(title))
+              
+            # 상세정보 조회
+            detailJson = scraper.getMovieDetail4Kodi(movieId, lang)
+            logger.debug('')
     
         # TV쇼 검색
         query = '왕좌의 게임'

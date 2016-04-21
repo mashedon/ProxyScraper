@@ -2,19 +2,19 @@
 <scraper framework="1.1" date="2016-04-01">
 
 	<NfoUrl dest="3">
-		<RegExp input="$$1" output="&lt;details&gt;&lt;url cache=&quot;daum_\2.json&quot;&gt;http://$INFO[host]/movie?id=daum_\1&amp;amp;language=$INFO[language]&lt;/url&gt;&lt;id&gt;\2&lt;/id&gt;&lt;/details&gt;" dest="3">
+		<RegExp input="$$1" output="&lt;details&gt;&lt;url cache=&quot;daum_\1_$INFO[language].json&quot;&gt;http://$INFO[host]/movie?id=daum_\1&amp;amp;language=$INFO[language]&lt;/url&gt;&lt;id&gt;\1&lt;/id&gt;&lt;/details&gt;" dest="3">
 			<expression clear="yes" noclean="1">movie.daum.net[^\?]*\?movieId=([0-9]+)</expression>
 		</RegExp>
-		<RegExp input="$$1" output="&lt;details&gt;&lt;url cache=&quot;tmdb_\2.json&quot;&gt;http://$INFO[host]/movie?id=tmdb_\2&amp;amp;language=$INFO[language]&lt;/url&gt;&lt;id&gt;\2&lt;/id&gt;&lt;/details&gt;" dest="3">
-			<expression clear="yes" noclean="1">(themoviedb.org/movie/)([0-9]*)</expression>
+		<RegExp input="$$1" output="&lt;details&gt;&lt;url cache=&quot;tmdb_\1_$INFO[language].json&quot;&gt;http://$INFO[host]/movie?id=tmdb_\1&amp;amp;language=$INFO[language]&lt;/url&gt;&lt;id&gt;\1&lt;/id&gt;&lt;/details&gt;" dest="3">
+			<expression clear="yes" noclean="1">themoviedb.org/movie/([0-9]*)</expression>
 		</RegExp>
 	</NfoUrl>
 
 	<!-- input:	$1=query string -->
 	<!-- returns:	the url we should use to do the search -->
 	<CreateSearchUrl dest="3">
-		<RegExp input="$$1" output="&lt;url cache=&quot;cache_\1$$10_$INFO[language].xml&quot;&gt;http://$INFO[host]/search/movie?query=\1&amp;amp;year=$$10&amp;amp;language=\3&lt;/url&gt;" dest="3">
-			<RegExp input="$$2" output="%20(\1)" dest="10">
+		<RegExp input="$$1" output="&lt;url cache=&quot;search_\1_$$10_$INFO[language]_$INFO[site].json&quot;&gt;http://$INFO[host]/search/movie?query=\1&amp;amp;year=$$10&amp;amp;language=$INFO[language]&amp;amp;site=$INFO[site]&lt;/url&gt;" dest="3">
+			<RegExp input="$$2" output="\1" dest="10">
 				<expression clear="yes">(.+)</expression>
 			</RegExp>
 			<expression/>
@@ -25,7 +25,7 @@
 	<!-- returns:	results in xml format <results><entity><title>*</title><year>*</year><language>*</language><id>*</id><url>*</url></entity>*</results> -->
 	<GetSearchResults dest="4">
 		<RegExp input="$$10" output="&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot; standalone=&quot;yes&quot;?&gt;&lt;results&gt;\1&lt;/results&gt;" dest="4">
-			<RegExp input="$$1" output="&lt;entity&gt;&lt;title&gt;\1&lt;/title&gt;&lt;year&gt;\2&lt;/year&gt;&lt;language&gt;\3&lt;/language&gt;&lt;id&gt;\4&lt;/id&gt;&lt;url cache=&quot;\1.xml&quot;&gt;http://$INFO[host]/movie?id=\4&amp;amp;language=\3&lt;/url&gt;&lt;/entity&gt;" dest="10">
+			<RegExp input="$$1" output="&lt;entity&gt;&lt;title&gt;\1&lt;/title&gt;&lt;year&gt;\2&lt;/year&gt;&lt;id&gt;\4&lt;/id&gt;&lt;url cache=&quot;\4_\3.json&quot;&gt;http://$INFO[host]/movie?id=\4&amp;amp;language=\3&lt;/url&gt;&lt;/entity&gt;" dest="10">
 				<expression repeat="yes">"title":"(.*?)","year":"(.*?)","language":"(.*?)","id":"(.*?)"</expression>
 			</RegExp>
 			<expression noclean="1"/>

@@ -1,5 +1,8 @@
+v0.0.6
+- Added: support for source website option
+
 v0.0.3
-- Added: support for using remote ScraperProxy
+- Added: support for using remote ProxyScraper
 
 v0.0.2
 - Added: support for scaping DAUM meta data

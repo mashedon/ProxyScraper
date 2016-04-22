@@ -10,12 +10,34 @@ import urllib2
 #from collections import OrderedDict
 from simplejson import OrderedDict
 from MockScraper import MockScraper
+from TMDBScraper import TMDBScraper
 '''
 Created on 2016. 3. 29.
 
 @author: mashedon@gmail.com
 '''
 
+'''
+[참고URL]
+
+# 영화 정보
+http://m.movie.daum.net/data/movie/search/movie.json?start=1&size=20&searchText={0}
+http://m.movie.daum.net/data/movie/movie_info/detail.json?movieId={0}
+http://m.movie.daum.net/data/movie/movie_info/cast_crew.json?pageNo=1&pageSize=20&movieId={0}
+http://m.movie.daum.net/data/movie/photo/movie/list.json?pageNo=1&pageSize=20&id={0}
+http://m.movie.daum.net/data/movie/vclip/movie/list.json?pageNo=1&pageSize=10&id={0}
+
+# TV 정보
+http://m.movie.daum.net/data/movie/search/tv.json?start=1&size=20&searchText={0}
+http://m.movie.daum.net/data/movie/tv/detail.json?tvProgramId={0}
+http://m.movie.daum.net/data/movie/tv/cast_crew.json?pageNo=1&pageSize=100&tvProgramId={0}
+http://m.movie.daum.net/data/movie/photo/tv/list.json?pageNo=1&pageSize=20&id={0}
+http://m.movie.daum.net/tv/main?tvProgramId={0}
+http://m.movie.daum.net/tv/crew?tvProgramId={0}
+http://m.movie.daum.net/tv/series?tvProgramId={0}
+http://m.movie.daum.net/m/tv/episode?tvProgramId={0}
+
+'''
 class DaumScraper(MockScraper):
     '''
     classdocs
@@ -37,8 +59,7 @@ class DaumScraper(MockScraper):
     def __findMovies(self, query):
         try:
             url = 'http://m.movie.daum.net/data/movie/search/movie.json?start=1&size=20&searchText={0}'.format(urllib2.quote(query))
-            return self._wget(url)
-        
+            return self._wget(url, '', 'dbg')
         except Exception as e: 
             self._log_err('{0}.{1}: {2}'.format(self.__class__.__name__, sys._getframe().f_code.co_name, str(e)))
 
@@ -48,9 +69,7 @@ class DaumScraper(MockScraper):
     def __getMovie(self, movieId):
         try:
             url = 'http://m.movie.daum.net/data/movie/movie_info/detail.json?movieId={0}'.format(movieId)
-            #return self._wget(url, '{0}{1}.json'.format(self.movieIdPrefix, movieId))
-            return self._wget(url)
-            
+            return self._wget(url, '', 'dbg')
         except Exception as e: 
             self._log_err('{0}.{1}: {2}'.format(self.__class__.__name__, sys._getframe().f_code.co_name, str(e)))
 
@@ -60,21 +79,27 @@ class DaumScraper(MockScraper):
     def __getMovieCredits(self, movieId):
         try:
             url = 'http://m.movie.daum.net/data/movie/movie_info/cast_crew.json?pageNo=1&pageSize=20&movieId={0}'.format(movieId)
-            #return self._wget(url, '{0}{1}_credit.json'.format(self.movieIdPrefix, movieId))
-            return self._wget(url)
-
+            return self._wget(url, '', 'dbg')
         except Exception as e: 
             self._log_err('{0}.{1}: {2}'.format(self.__class__.__name__, sys._getframe().f_code.co_name, str(e)))
 
 
     # 영화 이미지정보 조회
-    # http://m.movie.daum.net/data/movie/photo/movie/list.json?pageNo=1&pageSize=10&id=79940
+    # http://m.movie.daum.net/data/movie/photo/movie/list.json?pageNo=1&pageSize=20&id=79940
     def __getMovieImages(self, movieId):
         try:
-            url = 'http://m.movie.daum.net/data/movie/photo/movie/list.json?pageNo=1&pageSize=10&id={0}'.format(movieId)
-            #return self._wget(url, '{0}{1}_image.json'.format(self.movieIdPrefix, movieId))
-            return self._wget(url)
-            
+            url = 'http://m.movie.daum.net/data/movie/photo/movie/list.json?pageNo=1&pageSize=20&id={0}'.format(movieId)
+            return self._wget(url, '', 'dbg')
+        except Exception as e: 
+            self._log_err('{0}.{1}: {2}'.format(self.__class__.__name__, sys._getframe().f_code.co_name, str(e)))
+
+
+    # TMDB 영화 이미지정보 조회
+    # http://api.tmdb.org/3/search/movie?api_key=f7f51775877e0bb6703520952b3c7840&query=검은 사제들&year=&language=en
+    def __findTMDBMovieImages(self, titleEn, year):
+        try:
+            url = 'http://api.tmdb.org/3/search/movie?api_key=f7f51775877e0bb6703520952b3c7840&query={0}&year={1}&language={2}'.format(urllib2.quote(titleEn), year, 'en')
+            return self._wget(url, '', 'dbg')
         except Exception as e: 
             self._log_err('{0}.{1}: {2}'.format(self.__class__.__name__, sys._getframe().f_code.co_name, str(e)))
 
@@ -84,31 +109,28 @@ class DaumScraper(MockScraper):
     def __getMovieTrailer(self, movieId):
         try:
             url = 'http://m.movie.daum.net/data/movie/vclip/movie/list.json?pageNo=1&pageSize=10&id={0}'.format(movieId)
-            #return self._wget(url, '{0}{1}_trailer.json'.format(self.movieIdPrefix, movieId))
-            return self._wget(url)
-
+            return self._wget(url, '', 'dbg')
         except Exception as e: 
             self._log_err('{0}.{1}: {2}'.format(self.__class__.__name__, sys._getframe().f_code.co_name, str(e)))
 
 
     # TV쇼 검색
-    # http://m.movie.daum.net/data/movie/search/tv.json?start=1&size=10&searchText=태양의 후예
+    # http://m.movie.daum.net/data/movie/search/tv.json?start=1&size=20&searchText=태양의 후예
     def __findTvShows(self, query):
         try:
-            url = 'http://m.movie.daum.net/data/movie/search/tv.json?start=1&size=10&searchText={0}'.format(urllib2.quote(query))
-            return self._wget(url)
-        
+            url = 'http://m.movie.daum.net/data/movie/search/tv.json?start=1&size=20&searchText={0}'.format(urllib2.quote(query))
+            return self._wget(url, '', 'dbg')
         except Exception as e: 
             self._log_err('{0}.{1}: {2}'.format(self.__class__.__name__, sys._getframe().f_code.co_name, str(e)))
 
 
-#     # TV쇼 상세정보 조회
+#     # TV쇼 상세정보 조회 (최신정보 조회 안됨)
 #     # http://m.movie.daum.net/data/movie/tv/detail.json?tvProgramId=65440
 #     def __getTvShow(self, showId):
 #         try:
 #             url = 'http://m.movie.daum.net/data/movie/tv/detail.json?tvProgramId={0}'.format(showId)
-#             return self._wget(url, '{0}{1}.json'.format(self.showIdPrefix, showId))
-#         
+#             cacheName = '{0}{1}.json'.format(self.showIdPrefix, showId)
+#             return self._wget(url, cacheName, 'dbg')
 #         except Exception as e: 
 #             self._log_err('{0}.{1}: {2}'.format(self.__class__.__name__, sys._getframe().f_code.co_name, str(e)))
 
@@ -118,32 +140,30 @@ class DaumScraper(MockScraper):
     def __getTvShowHtml(self, showId):
         try:
             url = 'http://m.movie.daum.net/tv/main?tvProgramId={0}'.format(showId)
-            return self._wget(url, '{0}{1}.html'.format(self.showIdPrefix, showId))
-        
+            cacheName = '{0}{1}.html'.format(self.showIdPrefix, showId)
+            return self._wget(url, cacheName, 'len')
         except Exception as e: 
             self._log_err('{0}.{1}: {2}'.format(self.__class__.__name__, sys._getframe().f_code.co_name, str(e)))
 
 
-    # TV쇼 사진정보 조회
-    # http://m.movie.daum.net/data/movie/photo/tv/list.json?pageNo=1&pageSize=10&id=65440
-    def __getTvShowImages(self, showId):
-        try:
-            url = 'http://m.movie.daum.net/data/movie/photo/tv/list.json?pageNo=1&pageSize=10&id={0}'.format(showId)
-            #return self._wget(url, '{0}{1}_image.json'.format(self.showIdPrefix, showId))
-            return self._wget(url)
-        
-        except Exception as e: 
-            self._log_err('{0}.{1}: {2}'.format(self.__class__.__name__, sys._getframe().f_code.co_name, str(e)))
+#     # TV쇼 사진정보 조회 (최신정보 조회 안됨)
+#     # http://m.movie.daum.net/data/movie/photo/tv/list.json?pageNo=1&pageSize=20&id=65440
+#     def __getTvShowImages(self, showId):
+#         try:
+#             url = 'http://m.movie.daum.net/data/movie/photo/tv/list.json?pageNo=1&pageSize=20&id={0}'.format(showId)
+#             cacheName = '{0}{1}_images.json'.format(self.showIdPrefix, showId)
+#             return self._wget(url, cacheName, 'dbg')
+#         except Exception as e: 
+#             self._log_err('{0}.{1}: {2}'.format(self.__class__.__name__, sys._getframe().f_code.co_name, str(e)))
 
 
-#     # TV쇼 배우정보 조회
+#     # TV쇼 배우정보 조회 (최신정보 조회 안됨)
 #     # http://m.movie.daum.net/data/movie/tv/cast_crew.json?pageNo=1&pageSize=100&tvProgramId=65440
 #     def __getTvShowCredits(self, showId):
 #         try:
 #             url = 'http://m.movie.daum.net/data/movie/tv/cast_crew.json?pageNo=1&pageSize=100&tvProgramId={0}'.format(showId)
-#             #return self._wget(url, '{0}{1}_credit.json'.format(self.showIdPrefix, showId))
-#             return self._wget(url)
-#         
+#             cacheName = '{0}{1}_credit.json'.format(self.showIdPrefix, showId)
+#             return self._wget(url, cacheName, 'dbg')
 #         except Exception as e: 
 #             self._log_err('{0}.{1}: {2}'.format(self.__class__.__name__, sys._getframe().f_code.co_name, str(e)))
 
@@ -153,9 +173,7 @@ class DaumScraper(MockScraper):
     def __getTvShowCreditsHtml(self, showId):
         try:
             url = 'http://m.movie.daum.net/tv/crew?tvProgramId={0}'.format(showId)
-            #return self._wget(url, '{0}{1}_credit.html'.format(self.showIdPrefix, showId))
-            return self._wget(url)
-        
+            return self._wget(url, '', 'len')
         except Exception as e: 
             self._log_err('{0}.{1}: {2}'.format(self.__class__.__name__, sys._getframe().f_code.co_name, str(e)))
 
@@ -165,8 +183,8 @@ class DaumScraper(MockScraper):
     def __getTvShowSeasonsHtml(self, showId):
         try:
             url = 'http://m.movie.daum.net/tv/series?tvProgramId={0}'.format(showId)
-            return self._wget(url, '{0}{1}_seasons.html'.format(self.showIdPrefix, showId))
-        
+            cacheName = '{0}{1}_seasons.html'.format(self.showIdPrefix, showId)
+            return self._wget(url, cacheName, 'len')
         except Exception as e: 
             self._log_err('{0}.{1}: {2}'.format(self.__class__.__name__, sys._getframe().f_code.co_name, str(e)))
 
@@ -177,8 +195,8 @@ class DaumScraper(MockScraper):
             body = self.__getTvShowSeasonsHtml(showId)
             m = re.search('MoreView.init\([0-9]+, (\[.*\])\);(.*)MoreView.setPageCount', body, re.S)
             seasonListJson = self._dict2json(self._json2dict(m.group(1)))
+            self._log_dbg(seasonListJson)
             return seasonListJson
-        
         except Exception as e: 
             self._log_err('{0}.{1}: {2}'.format(self.__class__.__name__, sys._getframe().f_code.co_name, str(e)))
 
@@ -188,8 +206,8 @@ class DaumScraper(MockScraper):
     def __getTvShowEpisodesHtml(self, showId):
         try:
             url = 'http://m.movie.daum.net/m/tv/episode?tvProgramId={0}'.format(showId)
-            return self._wget(url, '{0}{1}_episode.html'.format(self.showIdPrefix, showId))
-        
+            cacheName = '{0}{1}_episode.html'.format(self.showIdPrefix, showId)
+            return self._wget(url, cacheName, 'len')
         except Exception as e: 
             self._log_err('{0}.{1}: {2}'.format(self.__class__.__name__, sys._getframe().f_code.co_name, str(e)))
 
@@ -200,6 +218,7 @@ class DaumScraper(MockScraper):
             body = self.__getTvShowEpisodesHtml(showId)
             m = re.search('MoreView.init\([0-9]+, (\[.*\])\);(.*)MoreView.setPageCount', body, re.S)
             episodeListJson = self._dict2json(self._json2dict(m.group(1)))
+            self._log_dbg(episodeListJson)
             return episodeListJson
         
         except Exception as e: 
@@ -266,35 +285,36 @@ class DaumScraper(MockScraper):
             kodiEntityDictTemplate = self._json2dict(self.kodiEntityJson)
             
             daumListDict =self._json2dict(daumListJson)
-            for daumDataDict in daumListDict['data']:
-                country = daumDataDict['countries'][0]['countryKo']
-                if (country == '한국') or (country == '대한민국'):
-                    # 국내 영화는 한글제목
-                    title = self._tag_strip(daumDataDict['titleKo'])
-                    lang = 'ko'
-                elif (lang == 'en'):
-                    # 영문 메타정보를 요청하였고 외국영화인 경우, 영문 제목
-                    title = self._tag_strip(daumDataDict['titleEn'])
-                else:
-                    # 한글 메타정보를 요청한 경우, 한글 제목
-                    title = self._tag_strip(daumDataDict['titleKo'])
+            if ('data' in daumListDict) and (daumListDict['data'] != None):
+                for daumDataDict in daumListDict['data']:
+                    country = daumDataDict['countries'][0]['countryKo']
+                    if (country == '한국') or (country == '대한민국'):
+                        # 국내 영화는 한글제목
+                        title = self._tag_strip(daumDataDict['titleKo'])
+                        lang = 'ko'
+                    elif (lang == 'en'):
+                        # 영문 메타정보를 요청하였고 외국영화인 경우, 영문 제목
+                        title = self._tag_strip(daumDataDict['titleEn'])
+                    else:
+                        # 한글 메타정보를 요청한 경우, 한글 제목
+                        title = self._tag_strip(daumDataDict['titleKo'])
+                        
+                    releaseYear = str(daumDataDict['prodYear'])
                     
-                releaseYear = str(daumDataDict['prodYear'])
-                
-                # 요청항목에 연도가 있다면, 같은 연도 영화만 검색
-                if (len(year) == 4) and (year != releaseYear):
-                    continue
-                
-                # 제목이 비어있으면 skip
-                if (title is None or title == ''):
-                    continue
-                
-                kodiEntityDict = copy.deepcopy(kodiEntityDictTemplate)
-                kodiEntityDict['entity']['title'] = '[Daum] {0}'.format(title) 
-                kodiEntityDict['entity']['year'] = releaseYear
-                kodiEntityDict['entity']['language'] = lang
-                kodiEntityDict['entity']['id'] = self.__convertEntityId(daumDataDict)
-                kodiListDict['results'].append(kodiEntityDict)
+                    # 요청항목에 연도가 있다면, 같은 연도 영화만 검색
+                    if (len(year) == 4) and (year != releaseYear):
+                        continue
+                    
+                    # 제목이 비어있으면 skip
+                    if (title is None or title == ''):
+                        continue
+                    
+                    kodiEntityDict = copy.deepcopy(kodiEntityDictTemplate)
+                    kodiEntityDict['entity']['title'] = '[Daum] {0}'.format(title) 
+                    kodiEntityDict['entity']['year'] = releaseYear
+                    kodiEntityDict['entity']['language'] = lang
+                    kodiEntityDict['entity']['id'] = self.__convertEntityId(daumDataDict)
+                    kodiListDict['results'].append(kodiEntityDict)
             
             return kodiListDict
         
@@ -304,7 +324,6 @@ class DaumScraper(MockScraper):
             
     def __convertMovie(self, kodiDetailDict, daumMovieJson, lang):
         try:
-            self._log_dbg(daumMovieJson)
             daumMovieDict = self._json2dict(daumMovieJson)
             daumDataDict = daumMovieDict['data']
             
@@ -383,6 +402,7 @@ class DaumScraper(MockScraper):
             kodiDetailDict['genre'] = genres
             kodiDetailDict['country'].append(country)
             kodiDetailDict['studio'].append(studio)
+            kodiDetailDict['titleEn'] = daumDataDict['titleEn']
             
             return kodiDetailDict
         
@@ -453,6 +473,35 @@ class DaumScraper(MockScraper):
             self._log_err('{0}.{1}: {2}'.format(self.__class__.__name__, sys._getframe().f_code.co_name, str(e)))
 
             
+    def __convertTMDBImages(self, kodiDetailDict, tmdbListJson):
+        try:
+            fanartDictTemplate = self._json2dict(self.kodiFanartJson)
+            
+            tmdbListDict = self._json2dict(tmdbListJson)
+            if (tmdbListDict['total_results'] > 0):
+                if ('results' in tmdbListDict) and (tmdbListDict['results'] != None):
+                    tmdbMovieDict = tmdbListDict['results'][0]
+                    
+                    # 포스터 추가
+                    if (tmdbMovieDict['poster_path'] != ''):
+                        posterImage = '{0}{1}'.format(TMDBScraper.baseImageURL, tmdbMovieDict['poster_path'])
+                        kodiDetailDict['thumb'].append(posterImage)
+                        kodiDetailDict['thumb'].reverse()
+                    
+                    # 팬아트 추가
+                    if (tmdbMovieDict['backdrop_path'] != ''):
+                        fanartImage = '{0}{1}'.format(TMDBScraper.baseImageURL, tmdbMovieDict['backdrop_path'])
+                        fanartDict = copy.deepcopy(fanartDictTemplate)
+                        fanartDict['thumb'] = fanartImage
+                        kodiDetailDict['fanart'].append(fanartDict)
+                        kodiDetailDict['fanart'].reverse()
+                
+            return kodiDetailDict
+        
+        except Exception as e: 
+            self._log_err('{0}.{1}: {2}'.format(self.__class__.__name__, sys._getframe().f_code.co_name, str(e)))
+
+            
     def __convertTvShow(self, kodiDetailDict, daumTvShowHtml, showId):
         try:
             daumTitle = self._regex_find('<strong class="tit_movie">(.*?)</strong>', daumTvShowHtml)
@@ -478,7 +527,8 @@ class DaumScraper(MockScraper):
             self._log_dbg('director={0}'.format(director))
             credits = self._regex_find('>([^<]*?)</a> \(극본\)', daumTvShowHtml)
             self._log_dbg('credits={0}'.format(credits))
-            plot = self._plot_escape(self._regex_find('<p class="desc_movie">(.*?)</p>', daumTvShowHtml))
+            #plot = self._plot_escape(self._regex_find('<p class="desc_movie">(.*?)</p>', daumTvShowHtml))
+            plot = self._plot_escape(self._regex_find('"og:description" content="(.*?)">', daumTvShowHtml))
             plot = self._tag_strip(plot)
             self._log_dbg('plot={0}'.format(plot))
             votes = re.sub(',', '', self._regex_find('평점 준 사람 수</span>([0-9,]*)\)</span>', daumTvShowHtml))
@@ -546,92 +596,121 @@ class DaumScraper(MockScraper):
             epDictTemplate = self._json2dict(self.kodiEpJson)
             
             daumEpisodesDict = self._json2dict(daumEpisodesJson)
+            showId = self.__convertEntityId(showId)
+            sno = str(sno)
             i = 0
             for daumEpDict in daumEpisodesDict:
                 title = daumEpDict['title']
-                if (len(title) == 0):
+                if (title == None) or (title == ''):
                     title = self._title_format(daumEpDict['name'], lang)
                     
+                eno = str(daumEpDict['sequence'])
+                
                 epDict = copy.deepcopy(epDictTemplate)
-                epDict['episode']['id'] = self.__convertEntityId(daumEpDict['programId'])
-                epDict['episode']['season'] = str(sno)
-                epDict['episode']['epnum'] = str(daumEpDict['sequence'])
-                epDict['episode']['title'] = title
-                epDict['episode']['aired'] = self.__convertDate(daumEpDict['channels'][0]['broadcastDate'])
-                epDict['episode']['url'] = ''   # addon에서 생성
+                detailsDict = epDict['episode']
+                detailsDict['id'] = daumEpDict['episodeId']
+                detailsDict['season'] = sno
+                detailsDict['epnum'] = eno
+                detailsDict['title'] = title
+                detailsDict['aired'] = self.__convertDate(daumEpDict['channels'][0]['broadcastDate'])
+                detailsDict['url'] = ''   # addon에서 생성
+                detailsDict['uniqueid'] = '{0}-{1}-{2}'.format(showId, sno, eno)
+                detailsDict['displayseason'] = sno
+                detailsDict['displayepisode'] = eno
+                detailsDict['displayafterseason'] = ''
+                #detailsDict['runtime'] = '60'
+                #detailsDict['rating'] = '7.1'
+                #detailsDict['votes'] = '52'
+                detailsDict['plot'] = self._plot_escape(daumEpDict['introduceDescription'])
+                #detailsDict['thumb'].append('https://image.tmdb.org/t/p/w300/wrGWeW4WKxnaeA8sxJb2T9O6ryo.jpg')
+                #detailsDict['director'].append('Tim Van Patten')
+                #detailsDict['credits'].append('David Benioff')
                 kodiEpListDict['episodeguide'].append(epDict)
                 i = i + 1
             
-            if (i > 0):
-                return kodiEpListDict
-            
-            # TV 회차 정보가 없으면, 가짜 회차 목록 생성하여 리턴
-            for i in range(1, 100):
-                epDict = copy.deepcopy(epDictTemplate)
-                epDict['episode']['id'] = self.__convertEntityId(showId)
-                epDict['episode']['season'] = str(sno)
-                epDict['episode']['epnum'] = str(i)
-                epDict['episode']['title'] = self._title_format(i, lang)
-                epDict['episode']['aired'] = ''
-                epDict['episode']['url'] = ''   # addon에서 생성
-                kodiEpListDict['episodeguide'].append(epDict)
+            if (i == 0):
+                # TV 회차 정보가 없으면, 가짜 회차 목록 생성하여 리턴
+                for i in range(1, 100):
+                    epDict = copy.deepcopy(epDictTemplate)
+                    detailsDict = epDict['episode']
+                    detailsDict['id'] = '{0}-{1}-{2}'.format(showId, sno, i)
+                    detailsDict['season'] = sno
+                    detailsDict['epnum'] = str(i)
+                    detailsDict['title'] = self._title_format(i, lang)
+                    detailsDict['aired'] = ''
+                    detailsDict['url'] = ''   # addon에서 생성
+                    detailsDict['uniqueid'] = detailsDict['id']
+                    detailsDict['displayseason'] = detailsDict['season']
+                    detailsDict['displayepisode'] = detailsDict['epnum']
+                    detailsDict['displayafterseason'] = ''
+                    #detailsDict['runtime'] = '60'
+                    #detailsDict['rating'] = '7.1'
+                    #detailsDict['votes'] = '52'
+                    detailsDict['plot'] = '.'
+                    #detailsDict['thumb'].append('https://image.tmdb.org/t/p/w300/wrGWeW4WKxnaeA8sxJb2T9O6ryo.jpg')
+                    #detailsDict['director'].append('Tim Van Patten')
+                    #detailsDict['credits'].append('David Benioff')
+                    kodiEpListDict['episodeguide'].append(epDict)
                 
+            kodiEpListDict['language'] = lang
             return kodiEpListDict
         
         except Exception as e: 
             self._log_err('{0}.{1}: {2}'.format(self.__class__.__name__, sys._getframe().f_code.co_name, str(e)))
 
     
-    def __convertTvShowEpisode(self, kodiEpDetailDict, daumEpisodesJson, showId, sno, eno):
+    def __convertTvShowEpisode(self, kodiEpDetailDict, daumEpisodesJson, showId, sno, eno, lang):
         try:
-            # Daum TV 회차 목록에서 요청한 회차정보 검색 
+            # Daum TV 회차 목록에서 요청한 회차정보 검색
+            showId = self.__convertEntityId(daumEpDict)
+            sno = str(sno) 
+            eno = str(eno)
             daumEpisodesDict = self._json2dict(daumEpisodesJson)
             for daumEpDict in daumEpisodesDict:
                 if (str(daumEpDict['sequence']) == eno):
-                    showId = self.__convertEntityId(daumEpDict)
                     
                     title = daumEpDict['title']
                     if (len(title) == 0):
-                        title = '제 {0}화'.format(daumEpDict['name'])
+                        title = self._title_format(daumEpDict['name'], lang)
                     
-                    detailsDict = kodiEpDetailDict['details']
-                    detailsDict['id'] = showId
-                    detailsDict['season'] = str(sno)
-                    detailsDict['episode'] = str(eno)
-                    detailsDict['title'] = title
-                    detailsDict['aired'] = self.__convertDate(daumEpDict['channels'][0]['broadcastDate'])
-                    detailsDict['uniqueid'] = '{0}_{1}_{2}'.format(showId, sno, eno)
-                    detailsDict['displayseason'] = str(sno)
-                    detailsDict['displayepisode'] = str(eno)
-                    detailsDict['displayafterseason'] = ''
-                    #detailsDict['runtime'] = '60'
-                    #detailsDict['rating'] = '7.1'
-                    #detailsDict['votes'] = '52'
-                    detailsDict['plot'] = self._plot_escape(daumEpDict['introduceDescription'])
-                    #detailsDict['thumb'].append('https://image.tmdb.org/t/p/w300/wrGWeW4WKxnaeA8sxJb2T9O6ryo.jpg')
-                    #detailsDict['director'].append('Tim Van Patten')
-                    #detailsDict['credits'].append('David Benioff')
+                    epDetailDict = kodiEpDetailDict['details']
+                    epDetailDict['id'] = daumEpDict['episodeId']
+                    epDetailDict['season'] = sno
+                    epDetailDict['episode'] = eno
+                    epDetailDict['title'] = title
+                    epDetailDict['aired'] = self.__convertDate(daumEpDict['channels'][0]['broadcastDate'])
+                    epDetailDict['uniqueid'] = '{0}-{1}-{2}'.format(showId, sno, eno)
+                    epDetailDict['displayseason'] = sno
+                    epDetailDict['displayepisode'] = eno
+                    epDetailDict['displayafterseason'] = ''
+                    #epDetailDict['runtime'] = '60'
+                    #epDetailDict['rating'] = '7.1'
+                    #epDetailDict['votes'] = '52'
+                    epDetailDict['plot'] = self._plot_escape(daumEpDict['introduceDescription'])
+                    #epDetailDict['thumb'].append('https://image.tmdb.org/t/p/w300/wrGWeW4WKxnaeA8sxJb2T9O6ryo.jpg')
+                    #epDetailDict['director'].append('Tim Van Patten')
+                    #epDetailDict['credits'].append('David Benioff')
                     
                     return kodiEpDetailDict
             
             #  Daum TV 회차정보가 없으면, 가짜 회차정보 생성하여 리턴  
-            detailsDict = kodiEpDetailDict['details']
-            detailsDict['id'] = self.__convertEntityId(showId)
-            detailsDict['season'] = str(sno)
-            detailsDict['episode'] = str(eno)
-            detailsDict['title'] = '제 {0}화'.format(eno)
-            detailsDict['aired'] = ''
-            detailsDict['uniqueid'] = '{0}_{1}_{2}'.format(showId, sno, eno)
-            detailsDict['displayseason'] = str(sno)
-            detailsDict['displayepisode'] = str(eno)
-            detailsDict['displayafterseason'] = ''
-            #detailsDict['runtime'] = '60'
-            #detailsDict['rating'] = '7.1'
-            #detailsDict['votes'] = '52'
-            detailsDict['plot'] = ''
-            #detailsDict['thumb'].append('https://image.tmdb.org/t/p/w300/wrGWeW4WKxnaeA8sxJb2T9O6ryo.jpg')
-            #detailsDict['director'].append('Tim Van Patten')
-            #detailsDict['credits'].append('David Benioff')
+            epDetailDict = kodiEpDetailDict['details']
+            epDetailDict['id'] = '{0}-{1}-{2}'.format(showId, sno, eno)
+            epDetailDict['season'] = sno
+            epDetailDict['episode'] = eno
+            epDetailDict['title'] = self._title_format(eno, lang)
+            epDetailDict['aired'] = ''
+            epDetailDict['uniqueid'] = epDetailDict['id']
+            epDetailDict['displayseason'] = epDetailDict['season']
+            epDetailDict['displayepisode'] = epDetailDict['episode']
+            epDetailDict['displayafterseason'] = ''
+            #epDetailDict['runtime'] = '60'
+            #epDetailDict['rating'] = '7.1'
+            #epDetailDict['votes'] = '52'
+            epDetailDict['plot'] = '.'
+            #epDetailDict['thumb'].append('https://image.tmdb.org/t/p/w300/wrGWeW4WKxnaeA8sxJb2T9O6ryo.jpg')
+            #epDetailDict['director'].append('Tim Van Patten')
+            #epDetailDict['credits'].append('David Benioff')
             return kodiEpDetailDict
         
         except Exception as e: 
@@ -649,7 +728,6 @@ class DaumScraper(MockScraper):
             year = str(year)
             
             daumListJson = self.__findMovies(query)
-            self._log_dbg(daumListJson)
             kodiListDict = self.__convertList(kodiListDict, daumListJson, year, lang)
             kodiListJson = self._dict2json(kodiListDict)
             self._log_dbg(kodiListJson)
@@ -668,21 +746,25 @@ class DaumScraper(MockScraper):
             
             # 영화 정보 변환
             daumMovieJson = self.__getMovie(movieId)
-            self._log_dbg(daumMovieJson)
             if daumMovieJson:
                 kodiMovieDict['details'] = self.__convertMovie(kodiMovieDict['details'], daumMovieJson, lang)
                 self._log_dbg(kodiMovieDict)
             
             # Credit 정보 변환
             daumCreditsJson = self.__getMovieCredits(movieId)
-            self._log_dbg(daumCreditsJson)
             if daumCreditsJson:
                 kodiMovieDict['details'] = self.__convertCredits(kodiMovieDict['details'], daumCreditsJson)
                 self._log_dbg(kodiMovieDict)
              
+            # TMDB 이미지 정보 추가
+            if (kodiMovieDict['details']['titleEn'] != ''):
+                tmdbListJson = self.__findTMDBMovieImages(kodiMovieDict['details']['titleEn'], kodiMovieDict['details']['year'])
+                if tmdbListJson:
+                    kodiMovieDict['details'] = self.__convertTMDBImages(kodiMovieDict['details'], tmdbListJson)
+                    self._log_dbg(kodiMovieDict)
+            
             # 이미지 정보 변환 
             daumImagesJson = self.__getMovieImages(movieId)
-            self._log_dbg(daumImagesJson)
             if daumImagesJson:
                 kodiMovieDict['details'] = self.__convertImages(kodiMovieDict['details'], daumImagesJson)
                 self._log_dbg(kodiMovieDict)
@@ -706,7 +788,6 @@ class DaumScraper(MockScraper):
             year = str(year)
             
             daumListJson = self.__findTvShows(query)
-            self._log_dbg(daumListJson)
             kodiListDict = self.__convertList(kodiListDict, daumListJson, year, lang)
             kodiListJson = self._dict2json(kodiListDict)
             self._log_dbg(kodiListJson)
@@ -725,7 +806,6 @@ class DaumScraper(MockScraper):
             
             # 영화 정보 변환
             daumTvShowHtml = self.__getTvShowHtml(showId)
-            #self._log_dbg('len(daumTvShowHtml)={0}', len(daumTvShowHtml))
             kodiDetailDict['details'] = self.__convertTvShow(kodiDetailDict['details'], daumTvShowHtml, showId)
             self._log_dbg(kodiDetailDict)
 
@@ -741,9 +821,16 @@ class DaumScraper(MockScraper):
             
             # Credit 정보 변환
             daumCreditsHtml = self.__getTvShowCreditsHtml(showId)
-            #self._log_dbg('len(daumCreditsHtml)={0}', len(daumCreditsHtml))
             kodiDetailDict['details'] = self.__convertTvShowCredits(kodiDetailDict['details'], daumCreditsHtml, showId)
             self._log_dbg(kodiDetailDict)
+            
+# 영문 제목을 찾을 수가 없어서 검색결과가 거의 없음...
+#             # TMDB 이미지 정보 추가
+#             if (kodiDetailDict['details']['daumTitle'] != ''):
+#                 tmdbListJson = self.__findTMDBMovieImages(kodiDetailDict['details']['daumTitle'], kodiDetailDict['details']['year'])
+#                 if tmdbListJson:
+#                     kodiDetailDict['details'] = self.__convertTMDBImages(kodiDetailDict['details'], tmdbListJson)
+#                     self._log_dbg(kodiDetailDict)
             
             kodiMovieJson = self._dict2json(kodiDetailDict)
             self._log_dbg(kodiMovieJson)
@@ -773,7 +860,6 @@ class DaumScraper(MockScraper):
             else:
                 # Daum TV의 전체 시즌 에피소드 목록을 조회
                 daumSeasonsJson = self.__getTvShowSeasons(showId)
-                self._log_dbg(daumSeasonsJson)
                 daumSeasonsDict = self._json2dict(daumSeasonsJson)
                 for seasonDict in daumSeasonsDict:
                     # 시즌별로 에피소드 목록을 조회
@@ -794,23 +880,42 @@ class DaumScraper(MockScraper):
     # 에피소드 상세정보 조회
     def getTvShowEpisode4Kodi(self, showId, sno, eno, lang):
         try:
-            kodiEpDetailDict = self._json2dict(self.kodiEpDetailJson)
-            self._log_dbg('{0}.{1}: showId={2}, sno={3}, eno={4}, lang={5}'.format(self.__class__.__name__, sys._getframe().f_code.co_name, showId, sno, eno, lang))
-            showId = self.__revertEntityId(showId)
-            sno = str(sno)
-            eno = str(eno)
-            
-            # 요청 시즌과 일치하는 시즌의 에피소드 정보를 조회
-            daumEpisodesJson = self.__getTvShowEpisodes(showId)
-            self._log_dbg(daumEpisodesJson)
-            kodiEpDetailDict = self.__convertTvShowEpisode(kodiEpDetailDict, daumEpisodesJson, showId, sno, eno)
-            kodiEpDetailJson = self._dict2json(kodiEpDetailDict)
-            self._log_dbg(kodiEpDetailJson)
-            return kodiEpDetailJson
+#             kodiEpDetailDict = self._json2dict(self.kodiEpDetailJson)
+#             self._log_dbg('{0}.{1}: showId={2}, sno={3}, eno={4}, lang={5}'.format(self.__class__.__name__, sys._getframe().f_code.co_name, showId, sno, eno, lang))
+#             showId = self.__revertEntityId(showId)
+#             sno = str(sno)
+#             eno = str(eno)
+#             
+#             # 요청 시즌과 일치하는 시즌의 에피소드 정보를 조회
+#             daumEpisodesJson = self.__getTvShowEpisodes(showId)
+#             kodiEpDetailDict = self.__convertTvShowEpisode(kodiEpDetailDict, daumEpisodesJson, showId, sno, eno, lang)
+#             kodiEpDetailJson = self._dict2json(kodiEpDetailDict)
+#             self._log_dbg(kodiEpDetailJson)
+#             return kodiEpDetailJson
+            return '{"error":"deprecated"}'
             
         except Exception as e: 
             self._log_err('{0}.{1}: {2}'.format(self.__class__.__name__, sys._getframe().f_code.co_name, str(e)))
 
+
+    def getTvShowImages4Kodi(self, showId, lang):
+        try:
+            showId = self.__revertEntityId(showId)
+            
+            # Daum TV의 전체 시즌 에피소드 목록을 조회
+            daumSeasonsJson = self.__getTvShowSeasons(showId)
+            kodiImagesXml = '<details>'
+            daumSeasonsDict = self._json2dict(daumSeasonsJson)
+            for seasonDict in daumSeasonsDict:
+                sno = self._regex_find(u'시즌 (\d+)', seasonDict['name'])
+                kodiImagesXml += '<thumb aspect="poster" type="season" season="%s">%s</thumb>' % (sno, seasonDict['mainImageUrl'])
+            kodiImagesXml += '</details>'
+            self._log_dbg(kodiImagesXml)
+            return kodiImagesXml
+
+        except Exception as e:
+            self._log_err('{0}.{1}: {2}'.format(self.__class__.__name__, sys._getframe().f_code.co_name, str(e)))
+        
 
 if __name__ == '__main__':
     try:
@@ -827,15 +932,15 @@ if __name__ == '__main__':
         logging.basicConfig(format=LOG_FORMAT, level=logging.DEBUG)
         logger = logging.getLogger(SVC_NAME)
         logger.info('==[STARTED]======================================')
-    
+        
 #         # 영화 검색
-#         query = '매트릭스 리로디드'
+#         query = 'loose change'
 #         year = ''
 #         lang = 'en'
 #         scraper = DaumScraper(SVC_NAME)
 #         listJson = scraper.findMovies4Kodi(query, year, lang)
 #         logger.debug('')
-#           
+#            
 #         listDict = json.loads(listJson, object_pairs_hook=OrderedDict)
 #         logger.debug(listDict)
 #         for resultDict in listDict['results']:
@@ -844,10 +949,12 @@ if __name__ == '__main__':
 #             logger.debug('movieId={0}'.format(movieId))
 #             title = resultDict['entity']['title']
 #             logger.debug('title={0}'.format(title))
-#                
+#                 
 #             # 상세정보 조회
 #             detailJson = scraper.getMovieDetail4Kodi(movieId, lang)
 #             logger.debug('')
+#             
+#             break
             
         # TV쇼 검색
         #query = '태양의 후예'
@@ -859,7 +966,7 @@ if __name__ == '__main__':
         tvscraper = DaumScraper(SVC_NAME)
         listJson = tvscraper.findTvShows4Kodi(query, year, lang)
         logger.debug('')
-           
+            
         listDict = json.loads(listJson, object_pairs_hook=OrderedDict)
         logger.debug(listDict)
         for resultDict in listDict['results']:
@@ -868,11 +975,11 @@ if __name__ == '__main__':
             logger.debug('showId={0}'.format(showId))
             title = resultDict['entity']['title']
             logger.debug('title={0}'.format(title))
-                  
+                   
             # 상세정보 조회
             detailJson = tvscraper.getTvShowDetail4Kodi(showId, lang)
             logger.debug('')
-         
+          
 #             # 에피소드 조회
 #             detailJson = tvscraper.getTvShowEpList4Kodi(showId, lang)
 #             logger.debug('')
@@ -880,7 +987,11 @@ if __name__ == '__main__':
 #             # 에피소드 상세정보 조회
 #             detailJson = tvscraper.getTvShowEpisode4Kodi(showId, '1', '2', lang)
 #             logger.debug('')
-        
+         
+            # 에피소드 조회
+            detailJson = tvscraper.getTvShowImages4Kodi(showId, lang)
+            logger.debug('')
+           
             break
     
     except Exception as e:

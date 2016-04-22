@@ -61,8 +61,7 @@ class TMDBScraper(MockScraper):
     def __findMovies(self, query, year, lang):
         try:
             url = 'http://api.tmdb.org/3/search/movie?api_key=f7f51775877e0bb6703520952b3c7840&query={0}&year={1}&language={2}'.format(urllib2.quote(query), year, lang)
-            return self._wget(url)
-        
+            return self._wget(url, '', 'dbg')
         except Exception as e: 
             self._log_err('{0}.{1}: {2}'.format(self.__class__.__name__, sys._getframe().f_code.co_name, str(e)))
 
@@ -72,9 +71,7 @@ class TMDBScraper(MockScraper):
     def __getMovie(self, movieId, lang):
         try:
             url = 'http://api.tmdb.org/3/movie/{0}?api_key=f7f51775877e0bb6703520952b3c7840&language={1}'.format(movieId, lang)
-            #return self._wget(url, '{0}.{1}.json'.format(self.__convertEntityId(movieId), lang))
-            return self._wget(url)
-        
+            return self._wget(url, '', 'dbg')
         except Exception as e: 
             self._log_err('{0}.{1}: {2}'.format(self.__class__.__name__, sys._getframe().f_code.co_name, str(e)))
 
@@ -84,9 +81,7 @@ class TMDBScraper(MockScraper):
     def __getMovieCredits(self, movieId, lang):
         try:
             url = 'http://api.tmdb.org/3/movie/{0}/credits?api_key=f7f51775877e0bb6703520952b3c7840&language={1}'.format(movieId, lang)
-            #return self._wget(url, '{0}_credit.{1}.json'.format(self.__convertEntityId(movieId), lang))
-            return self._wget(url)
-        
+            return self._wget(url, '', 'dbg')
         except Exception as e: 
             self._log_err('{0}.{1}: {2}'.format(self.__class__.__name__, sys._getframe().f_code.co_name, str(e)))
 
@@ -96,9 +91,7 @@ class TMDBScraper(MockScraper):
     def __getMovieReleases(self, movieId, lang):
         try:
             url = 'http://api.tmdb.org/3/movie/{0}/releases?api_key=f7f51775877e0bb6703520952b3c7840&language={1}'.format(movieId, lang)
-            #return self._wget(url, '{0}_release.{1}.json'.format(self.__convertEntityId(movieId), lang))
-            return self._wget(url)
-        
+            return self._wget(url, '', 'dbg')
         except Exception as e: 
             self._log_err('{0}.{1}: {2}'.format(self.__class__.__name__, sys._getframe().f_code.co_name, str(e)))
 
@@ -108,9 +101,7 @@ class TMDBScraper(MockScraper):
     def __getMovieImages(self, movieId, lang):
         try:
             url = 'http://api.tmdb.org/3/movie/{0}/images?api_key=f7f51775877e0bb6703520952b3c7840&language={1}'.format(movieId, lang)
-            #return self._wget(url, '{0}_image.{1}.json'.format(self.__convertEntityId(movieId), lang))
-            return self._wget(url)
-        
+            return self._wget(url, '', 'dbg')
         except Exception as e: 
             self._log_err('{0}.{1}: {2}'.format(self.__class__.__name__, sys._getframe().f_code.co_name, str(e)))
 
@@ -120,8 +111,7 @@ class TMDBScraper(MockScraper):
     def __findTvShows(self, query, year, lang):
         try:
             url = 'http://api.tmdb.org/3/search/tv?api_key=f7f51775877e0bb6703520952b3c7840&query={0}&year={1}&language={2}'.format(urllib2.quote(query), year, lang)
-            return self._wget(url)
-        
+            return self._wget(url, '', 'dbg')
         except Exception as e: 
             self._log_err('{0}.{1}: {2}'.format(self.__class__.__name__, sys._getframe().f_code.co_name, str(e)))
 
@@ -131,8 +121,8 @@ class TMDBScraper(MockScraper):
     def __getTvShow(self, showId, lang):
         try:
             url = 'http://api.tmdb.org/3/tv/{0}?api_key=f7f51775877e0bb6703520952b3c7840&language={1}'.format(showId, lang)
-            return self._wget(url, '{0}.{1}.json'.format(self.__convertEntityId(showId, False), lang))
-        
+            cacheName = '{0}.{1}.json'.format(self.__convertEntityId(showId, False), lang)
+            return self._wget(url, cacheName, 'dbg')
         except Exception as e: 
             self._log_err('{0}.{1}: {2}'.format(self.__class__.__name__, sys._getframe().f_code.co_name, str(e)))
 
@@ -142,9 +132,7 @@ class TMDBScraper(MockScraper):
     def __getTvShowCredits(self, showId, lang):
         try:
             url = 'http://api.tmdb.org/3/tv/{0}/credits?api_key=f7f51775877e0bb6703520952b3c7840&language={1}'.format(showId, lang)
-            #return self._wget(url, '{0}_credit.{1}.json'.format(self.__convertEntityId(showId, False), lang))
-            return self._wget(url)
-        
+            return self._wget(url, '', 'dbg')
         except Exception as e: 
             self._log_err('{0}.{1}: {2}'.format(self.__class__.__name__, sys._getframe().f_code.co_name, str(e)))
 
@@ -154,9 +142,17 @@ class TMDBScraper(MockScraper):
     def __getTvShowImages(self, showId, lang):
         try:
             url = 'http://api.tmdb.org/3/tv/{0}/images?api_key=f7f51775877e0bb6703520952b3c7840&language={1}'.format(showId, lang)
-            #return self._wget(url, '{0}_image.{1}.json'.format(self.__convertEntityId(showId), lang))
-            return self._wget(url)
-        
+            return self._wget(url, '', 'dbg')
+        except Exception as e: 
+            self._log_err('{0}.{1}: {2}'.format(self.__class__.__name__, sys._getframe().f_code.co_name, str(e)))
+
+
+    # TV쇼 시즌별 이미지정보 조회
+    # http://api.tmdb.org/3/tv/65143/season/1/images?api_key=f7f51775877e0bb6703520952b3c7840&language=en
+    def __getTvShowSeasonImages(self, showId, sno, lang):
+        try:
+            url = 'http://api.tmdb.org/3/tv/{0}/season/{1}/images?api_key=f7f51775877e0bb6703520952b3c7840&language={2}'.format(showId, sno, lang)
+            return self._wget(url, '', 'dbg')
         except Exception as e: 
             self._log_err('{0}.{1}: {2}'.format(self.__class__.__name__, sys._getframe().f_code.co_name, str(e)))
 
@@ -166,8 +162,8 @@ class TMDBScraper(MockScraper):
     def __getTvShowEpList(self, showId, sno, lang):
         try:
             url = 'http://api.tmdb.org/3/tv/{0}/season/{1}?api_key=f7f51775877e0bb6703520952b3c7840&language={2}'.format(showId, sno, lang)
-            return self._wget(url, '{0}_season{1}.{2}.json'.format(self.__convertEntityId(showId), sno, lang))
-        
+            cacheName = '{0}_season{1}.{2}.json'.format(self.__convertEntityId(showId), sno, lang)
+            return self._wget(url, cacheName, 'dbg')
         except Exception as e: 
             self._log_err('{0}.{1}: {2}'.format(self.__class__.__name__, sys._getframe().f_code.co_name, str(e)))
 
@@ -177,9 +173,7 @@ class TMDBScraper(MockScraper):
     def __getTvShowEpisode(self, showId, sno, eno, lang):
         try:
             url = 'http://api.tmdb.org/3/tv/{0}/season/{1}/episode/{2}?api_key=f7f51775877e0bb6703520952b3c7840&language={3}'.format(showId, sno, eno, lang)
-            #return self._wget(url, '{0}_season{1}_episode{2}.{3}.json'.format(self.__convertEntityId(showId), sno, eno, lang))
-            return self._wget(url)
-        
+            return self._wget(url, '', 'dbg')
         except Exception as e: 
             self._log_err('{0}.{1}: {2}'.format(self.__class__.__name__, sys._getframe().f_code.co_name, str(e)))
 
@@ -224,41 +218,48 @@ class TMDBScraper(MockScraper):
             kodiEntityDictTemplate = self._json2dict(self.kodiEntityJson)
             
             tmdbListDict = self._json2dict(tmdbListJson)
-            for tmdbMovieDict in tmdbListDict['results']:
-                kodiEntityDict = copy.deepcopy(kodiEntityDictTemplate)
-                
-                movieYn = True
-                title = ''
-                if 'name' in tmdbMovieDict:
-                    movieYn = False
-                    if (tmdbMovieDict['original_language'] == 'ko'):
-                        title = tmdbMovieDict['original_name']
-                        lang = 'ko'
-                    else:
-                        title = tmdbMovieDict['name']
-                else:
-                    if (tmdbMovieDict['original_language'] == 'ko'):
-                        title = tmdbMovieDict['original_title']
-                        lang = 'ko'
-                    else:
+            if ('results' in tmdbListDict) and (tmdbListDict['results'] != None):
+                for tmdbMovieDict in tmdbListDict['results']:
+                    
+                    movieYn = True
+                    releaseDate = ''
+                    title = ''
+                    originalTitle = ''
+                    if ('release_date' in tmdbMovieDict):
+                        movieYn = True
+                        releaseDate = tmdbMovieDict['release_date']
                         title = tmdbMovieDict['title']
-                
-                releaseYear = ''
-                if 'first_air_date' in tmdbMovieDict:
-                    releaseYear = tmdbMovieDict['first_air_date'][0:4]
-                else:
-                    releaseYear = tmdbMovieDict['release_date'][0:4]
-                
-                # 요청항목에 연도가 있다면, 같은 연도 영화만 검색
-                if (len(year) == 4) and (year != releaseYear):
-                    continue
-                
-                kodiEntityDict['entity']['title'] = '[TMDB] {0}'.format(title)
-                kodiEntityDict['entity']['year'] = releaseYear
-                kodiEntityDict['entity']['language'] = lang
-                kodiEntityDict['entity']['id'] = self.__convertEntityId(tmdbMovieDict['id'], movieYn)
-                kodiListDict['results'].append(kodiEntityDict)
-            
+                        originalTitle = tmdbMovieDict['original_title'] 
+                    else:
+                        movieYn = False
+                        releaseDate = tmdbMovieDict['first_air_date']
+                        title = tmdbMovieDict['name']
+                        originalTitle = tmdbMovieDict['original_name'] 
+                    
+                    # 요청항목에 연도가 있다면, 같은 연도 영화만 검색
+                    releaseYear = releaseDate[0:4]
+                    if (len(year) == 4) and (year != releaseYear):
+                        continue
+                    
+                    if (tmdbMovieDict['original_language'] == 'ko'):
+                        title = originalTitle
+                        lang = 'ko'
+                    
+                    kodiEntityDict = copy.deepcopy(kodiEntityDictTemplate)
+                    kodiEntityDict['entity']['title'] = '[TMDB] {0}'.format(title)
+                    kodiEntityDict['entity']['year'] = releaseYear
+                    kodiEntityDict['entity']['language'] = lang
+                    kodiEntityDict['entity']['id'] = self.__convertEntityId(tmdbMovieDict['id'], movieYn)
+                    kodiListDict['results'].append(kodiEntityDict)
+                    
+                    if (lang == 'ko') and (originalTitle != title) and (originalTitle != ''):
+                        kodiEntityDict = copy.deepcopy(kodiEntityDictTemplate)
+                        kodiEntityDict['entity']['title'] = '[TMDB] {0}'.format(originalTitle)
+                        kodiEntityDict['entity']['year'] = releaseYear
+                        kodiEntityDict['entity']['language'] = lang
+                        kodiEntityDict['entity']['id'] = self.__convertEntityId(tmdbMovieDict['id'], movieYn)
+                        kodiListDict['results'].append(kodiEntityDict)
+                    
             return kodiListDict
         
         except Exception as e:
@@ -429,15 +430,15 @@ class TMDBScraper(MockScraper):
                 lang = 'en'
             
             plot = kodiMovieDict['plot']
-            if ('overview' in tmdbTvShowDict) and (len(tmdbTvShowDict['overview']) > 0):
+            if ('overview' in tmdbTvShowDict) and (tmdbTvShowDict['overview'] != None) and (len(tmdbTvShowDict['overview']) > 0):
                 plot = self._plot_escape(tmdbTvShowDict['overview'])
 
             posterImage = ''
-            if ('poster_path' in tmdbTvShowDict) and (len(tmdbTvShowDict['poster_path']) > 0):
+            if ('poster_path' in tmdbTvShowDict) and (len(tmdbTvShowDict['poster_path']) != None) and (len(tmdbTvShowDict['poster_path']) > 0):
                 posterImage = '{0}{1}'.format(self.baseImageURL, tmdbTvShowDict['poster_path'])
 
             fanartImage = ''
-            if ('backdrop_path' in tmdbTvShowDict) and (len(tmdbTvShowDict['backdrop_path']) > 0):
+            if ('backdrop_path' in tmdbTvShowDict) and (len(tmdbTvShowDict['backdrop_path']) != None) and (len(tmdbTvShowDict['backdrop_path']) > 0):
                 fanartImage = '{0}{1}'.format(self.baseImageURL, tmdbTvShowDict['backdrop_path'])
             
             kodiMovieDict['id'] = self.__convertEntityId(tmdbTvShowDict['id'], False)
@@ -469,7 +470,36 @@ class TMDBScraper(MockScraper):
         
         except Exception as e: 
             self._log_err('{0}.{1}: {2}'.format(self.__class__.__name__, sys._getframe().f_code.co_name, str(e)))
+    
             
+    def __convertTvShowImageList(self, tmdbImageListJson, showId, sno = ''):
+        try:
+            tmdbImageListDict = self._json2dict(tmdbImageListJson)
+            listXml = ''
+            
+            # 포스터 이미지(세로로 긴 이미지)
+            if ('posters' in tmdbImageListDict):
+                for imageDict in tmdbImageListDict['posters']:
+                    if (sno == ''):
+                        listXml += '<thumb aspect="poster">%s</thumb>' % (sno, '{0}{1}'.format(self.baseImageURL, imageDict['file_path']))
+                    else:
+                        listXml += '<thumb aspect="poster" type="season" season="%s">%s</thumb>' % (sno, '{0}{1}'.format(self.baseImageURL, imageDict['file_path']))
+            
+            # 팬아트 이미지(가로로 넓은 이미지)
+            if ('backdrops' in tmdbImageListDict):
+                listXml += '<fanart url="%s">' % (self.baseImageURL)
+                for imageDict in tmdbImageListDict['backdrops']:
+                    if (sno == ''):
+                        listXml += '<thumb aspect="poster">%s</thumb>' % (sno, imageDict['file_path'])
+                    else:
+                        listXml += '<thumb aspect="poster" type="season" season="%s">%s</thumb>' % (sno, imageDict['file_path'])
+                listXml += '</fanart>'
+            
+            return listXml
+            
+        except Exception as e: 
+            self._log_err('{0}.{1}: {2}'.format(self.__class__.__name__, sys._getframe().f_code.co_name, str(e)))
+        
 
     def __convertTvShowEpList(self, kodiEpListDict, tmdbEpisodesJson, showId, lang):
         try:
@@ -477,76 +507,100 @@ class TMDBScraper(MockScraper):
             
             tmdbEpisodesDict = self._json2dict(tmdbEpisodesJson)
             showId = self.__convertEntityId(showId, False)
-            sno = tmdbEpisodesDict['season_number']
+            sno = str(tmdbEpisodesDict['season_number'])
             i = 0
             for tmdbEpDict in tmdbEpisodesDict['episodes']:
                 title = tmdbEpDict['name']
-                if (len(title) == 0):
+                if (title == None) or (title == ''):
                     title = self._title_format(tmdbEpDict['episode_number'], lang)
     
                 stillImage = ''
                 if ('still_path' in tmdbEpDict) and (tmdbEpDict['still_path'] != None):
                     stillImage = '{0}{1}'.format(self.baseImageURL, tmdbEpDict['still_path'])
+                    
+                eno = str(tmdbEpDict['episode_number'])
     
                 epDict = copy.deepcopy(epDictTemplate)
-                epDict['episode']['id'] = showId
-                epDict['episode']['season'] = str(sno)
-                epDict['episode']['epnum'] = str(tmdbEpDict['episode_number'])
-                epDict['episode']['title'] = title
-                epDict['episode']['aired'] = tmdbEpDict['air_date']
-                epDict['episode']['language'] = lang
-                epDict['episode']['url'] = ''   # addon에서 생성
+                detailsDict = epDict['episode'] 
+                detailsDict['id'] = str(tmdbEpDict['id'])
+                detailsDict['season'] = sno
+                detailsDict['epnum'] = eno
+                detailsDict['title'] = title
+                detailsDict['aired'] = tmdbEpDict['air_date']
+                detailsDict['url'] = ''   # addon에서 생성
+                detailsDict['uniqueid'] = '{0}-{1}-{2}'.format(showId, sno, eno)
+                detailsDict['displayseason'] = sno
+                detailsDict['displayepisode'] = eno
+                detailsDict['displayafterseason'] = ''
+                #detailsDict['runtime'] = '60'
+                #detailsDict['rating'] = '7.1'
+                #detailsDict['votes'] = '52'
+                detailsDict['plot'] = self._plot_escape(tmdbEpDict['overview'])
                 if (stillImage != ''):
-                    epDict['episode']['thumb'].append(stillImage)
+                    detailsDict['thumb'].append(stillImage)
+                #detailsDict['director'].append('Tim Van Patten')
+                #detailsDict['credits'].append('David Benioff')
                 kodiEpListDict['episodeguide'].append(epDict)
                 i = i + 1
             
-            if (i > 0):
-                return kodiEpListDict
-            
-            # TV 회차 정보가 없으면, 가짜 회차 목록 생성하여 리턴
-            for i in range(1, 100):
-                epDict = copy.deepcopy(epDictTemplate)
-                epDict['episode']['id'] = self.__convertEntityId(showId)
-                epDict['episode']['season'] = str(sno)
-                epDict['episode']['epnum'] = str(i)
-                epDict['episode']['title'] = title = self._title_format(i, lang)
-                epDict['episode']['aired'] = ''
-                epDict['episode']['language'] = lang
-                epDict['episode']['url'] = ''   # addon에서 생성
-                kodiEpListDict['episodeguide'].append(epDict)
+            if (i == 0):
+                # TV 회차 정보가 없으면, 가짜 회차 목록 생성하여 리턴
+                for i in range(1, 100):
+                    epDict = copy.deepcopy(epDictTemplate)
+                    detailsDict = epDict['episode'] 
+                    detailsDict['id'] = '{0}-{1}-{2}'.format(showId, sno, i)
+                    detailsDict['season'] = sno
+                    detailsDict['epnum'] = str(i)
+                    detailsDict['title'] = self._title_format(i, lang)
+                    detailsDict['aired'] = ''
+                    detailsDict['url'] = ''   # addon에서 생성
+                    detailsDict['uniqueid'] = detailsDict['id']
+                    detailsDict['displayseason'] = detailsDict['season']
+                    detailsDict['displayepisode'] = detailsDict['epnum']
+                    detailsDict['displayafterseason'] = ''
+                    #detailsDict['runtime'] = '60'
+                    #detailsDict['rating'] = '7.1'
+                    #detailsDict['votes'] = '52'
+                    detailsDict['plot'] = '.'
+                    #detailsDict['thumb'].append('https://image.tmdb.org/t/p/w300/wrGWeW4WKxnaeA8sxJb2T9O6ryo.jpg')
+                    #detailsDict['director'].append('Tim Van Patten')
+                    #detailsDict['credits'].append('David Benioff')
+                    kodiEpListDict['episodeguide'].append(epDict)
                 
+            kodiEpListDict['language'] = lang
             return kodiEpListDict
         
         except Exception as e: 
             self._log_err('{0}.{1}: {2}'.format(self.__class__.__name__, sys._getframe().f_code.co_name, str(e)))
             
 
-    def __convertTvShowEpisode(self, kodiEpDetailDict, tmdbEpisodesJson, showId, sno, eno):
+    def __convertTvShowEpisode(self, kodiEpDetailDict, tmdbEpisodesJson, showId, sno, eno, lang):
         try:
             # 회차 목록에서 요청한 회차정보 검색 
             showId = self.__convertEntityId(showId, False)
+            sno = str(sno)
+            eno = str(eno)
             tmdbEpisodesDict = self._json2dict(tmdbEpisodesJson)
             for tmdbEpDict in tmdbEpisodesDict['episodes']:
                 if (str(tmdbEpDict['episode_number']) == eno):
                     
                     title = tmdbEpDict['name']
                     if (len(title) == 0):
-                        title = '제 {0}화'.format(tmdbEpDict['episode_number'])
+                        title = self._title_format(tmdbEpDict['episode_number'], lang)
                     
                     stillImage = ''
                     if ('still_path' in tmdbEpDict) and (tmdbEpDict['still_path'] != None):
                         stillImage = '{0}{1}'.format(self.baseImageURL, tmdbEpDict['still_path'])
         
                     detailsDict = kodiEpDetailDict['details']
-                    detailsDict['id'] = showId
-                    detailsDict['season'] = str(sno)
-                    detailsDict['episode'] = str(eno)
+                    detailsDict['id'] = str(tmdbEpDict['id'])
+                    detailsDict['season'] = sno
+                    detailsDict['episode'] = eno
                     detailsDict['title'] = title
                     detailsDict['aired'] = tmdbEpDict['air_date']
-                    detailsDict['uniqueid'] = '{0}_{1}_{2}'.format(showId, sno, eno)
-                    detailsDict['displayseason'] = str(sno)
-                    detailsDict['displayepisode'] = str(eno)
+                    detailsDict['uniqueid'] = '{0}-{1}-{2}'.format(showId, sno, eno)
+                    detailsDict['displayseason'] = sno
+                    detailsDict['displayepisode'] = eno
                     detailsDict['displayafterseason'] = ''
                     #detailsDict['runtime'] = '60'
                     #detailsDict['rating'] = '7.1'
@@ -561,19 +615,19 @@ class TMDBScraper(MockScraper):
             
             #  TMDB TV 회차정보가 없으면, 가짜 회차정보 생성하여 리턴  
             detailsDict = kodiEpDetailDict['details']
-            detailsDict['id'] = showId
-            detailsDict['season'] = str(sno)
-            detailsDict['episode'] = str(eno)
+            detailsDict['id'] = '{0}-{1}-{2}'.format(showId, sno, eno)
+            detailsDict['season'] = sno
+            detailsDict['episode'] = eno
             detailsDict['title'] = '제 {0}화'.format(eno)
             detailsDict['aired'] = ''
-            detailsDict['uniqueid'] = '{0}_{1}_{2}'.format(showId, sno, eno)
-            detailsDict['displayseason'] = str(sno)
-            detailsDict['displayepisode'] = str(eno)
+            detailsDict['uniqueid'] = detailsDict['id'] 
+            detailsDict['displayseason'] = detailsDict['season']
+            detailsDict['displayepisode'] = detailsDict['episode']
             detailsDict['displayafterseason'] = ''
             #detailsDict['runtime'] = '60'
             #detailsDict['rating'] = '7.1'
             #detailsDict['votes'] = '52'
-            detailsDict['plot'] = ''
+            detailsDict['plot'] = '.'
             #detailsDict['thumb'].append('https://image.tmdb.org/t/p/w300/wrGWeW4WKxnaeA8sxJb2T9O6ryo.jpg')
             #detailsDict['director'].append('Tim Van Patten')
             #detailsDict['credits'].append('David Benioff')
@@ -590,7 +644,6 @@ class TMDBScraper(MockScraper):
             self._log_dbg('{0}.{1}: query={2}, year={3}, lang={4}'.format(self.__class__.__name__, sys._getframe().f_code.co_name, query, year, lang))
             
             tmdbListJson = self.__findMovies(query, year, lang)
-            self._log_dbg(tmdbListJson)
             kodiListDict = self.__convertList(kodiListDict, tmdbListJson, year, lang)
             kodiListJson = self._dict2json(kodiListDict)
             self._log_dbg(kodiListJson)
@@ -609,28 +662,24 @@ class TMDBScraper(MockScraper):
             
             # 영화 정보 변환
             tmdbMovieJson = self.__getMovie(movieId, lang)
-            self._log_dbg(tmdbMovieJson)
             if tmdbMovieJson:
                 kodiMovieDict['details'] = self.__convertMovie(kodiMovieDict['details'], tmdbMovieJson, lang)
                 self._log_dbg(kodiMovieDict)
             
             # Credit 정보 변환
             tmdbCreditsJson = self.__getMovieCredits(movieId, lang)
-            self._log_dbg(tmdbCreditsJson)
             if tmdbCreditsJson:
                 kodiMovieDict['details'] = self.__convertCredits(kodiMovieDict['details'], tmdbCreditsJson)
                 self._log_dbg(kodiMovieDict)
              
             # Release 정보 변환
             tmdbReleasesJson = self.__getMovieReleases(movieId, lang)
-            self._log_dbg(tmdbReleasesJson)
             if tmdbReleasesJson:
                 kodiMovieDict['details'] = self.__convertReleases(kodiMovieDict['details'], tmdbReleasesJson)
                 self._log_dbg(kodiMovieDict)
             
             # 이미지 정보 변환
             tmdbImagesJson = self.__getMovieImages(movieId, lang)
-            self._log_dbg(tmdbImagesJson)
             if tmdbImagesJson:
                 kodiMovieDict['details'] = self.__convertImages(kodiMovieDict['details'], tmdbImagesJson)
                 self._log_dbg(kodiMovieDict)
@@ -651,7 +700,6 @@ class TMDBScraper(MockScraper):
             year = str(year)
             
             tmdbListJson = self.__findTvShows(query, year, lang)
-            self._log_dbg(tmdbListJson)
             kodiListDict = self.__convertList(kodiListDict, tmdbListJson, year, lang)
             kodiListJson = self._dict2json(kodiListDict)
             self._log_dbg(kodiListJson)
@@ -670,21 +718,18 @@ class TMDBScraper(MockScraper):
             
             # TV쇼 정보 변환
             tmdbTvShowJson = self.__getTvShow(showId, lang)
-            self._log_dbg(tmdbTvShowJson)
             kodiDetailDict['details'] = self.__convertTvShow(kodiDetailDict['details'], tmdbTvShowJson)
             self._log_dbg(kodiDetailDict)
             
             # Credit 정보 변환
             #tmdbCreditsJson = self.__getTvShowCredits(showId, lang)
             tmdbCreditsJson = self.__getTvShowCredits(showId, 'en')
-            self._log_dbg(tmdbCreditsJson)
             kodiDetailDict['details'] = self.__convertCredits(kodiDetailDict['details'], tmdbCreditsJson)
             self._log_dbg(kodiDetailDict)
             
             # 이미지 정보 변환
             #tmdbImagesJson = self.__getTvShowImages(showId, lang)
             tmdbImagesJson = self.__getTvShowImages(showId, 'en')
-            self._log_dbg(tmdbImagesJson)
             kodiDetailDict['details'] = self.__convertImages(kodiDetailDict['details'], tmdbImagesJson)
             self._log_dbg(kodiDetailDict)
             
@@ -705,7 +750,6 @@ class TMDBScraper(MockScraper):
 
             # TV쇼 정보 변환
             tmdbTvShowJson = self.__getTvShow(showId, lang)
-            self._log_dbg(tmdbTvShowJson)
             tmdbTvShowDict = self._json2dict(tmdbTvShowJson)
             
             # 에피소드 상세내용은 한국 드라마는 한글로, 외화는 영문으로 조회
@@ -718,7 +762,6 @@ class TMDBScraper(MockScraper):
             seasonCount = tmdbTvShowDict['number_of_seasons']
             for season in range(1, (seasonCount+1)):
                 tmdbEpisodesJson = self.__getTvShowEpList(showId, season, lang)
-                self._log_dbg(tmdbEpisodesJson)
                 self.__convertTvShowEpList(kodiEpListDict, tmdbEpisodesJson, showId, lang)
 
             kodiEpListJson = self._dict2json(kodiEpListDict)
@@ -732,24 +775,53 @@ class TMDBScraper(MockScraper):
     # 에피소드 상세정보 조회
     def getTvShowEpisode4Kodi(self, showId, sno, eno, lang):
         try:
-            kodiEpDetailDict = self._json2dict(self.kodiEpDetailJson)
-            self._log_dbg('{0}.{1}: showId={2}, sno={3}, eno={4}, lang={5}'.format(self.__class__.__name__, sys._getframe().f_code.co_name, showId, sno, eno, lang))
-            showId = self.__revertEntityId(showId)
-            sno = str(sno)
-            eno = str(eno)
-            
-            # 요청 시즌과 일치하는 시즌의 에피소드 정보를 조회
-            tmdbEpisodesJson = self.__getTvShowEpList(showId, sno, lang)
-            self._log_dbg(tmdbEpisodesJson)
-            kodiEpDetailDict = self.__convertTvShowEpisode(kodiEpDetailDict, tmdbEpisodesJson, showId, sno, eno)
-            kodiEpDetailJson = self._dict2json(kodiEpDetailDict)
-            self._log_dbg(kodiEpDetailJson)
-            return kodiEpDetailJson
+#             kodiEpDetailDict = self._json2dict(self.kodiEpDetailJson)
+#             self._log_dbg('{0}.{1}: showId={2}, sno={3}, eno={4}, lang={5}'.format(self.__class__.__name__, sys._getframe().f_code.co_name, showId, sno, eno, lang))
+#             showId = self.__revertEntityId(showId)
+#             sno = str(sno)
+#             eno = str(eno)
+#             
+#             # 요청 시즌과 일치하는 시즌의 에피소드 정보를 조회
+#             tmdbEpisodesJson = self.__getTvShowEpList(showId, sno, lang)
+#             kodiEpDetailDict = self.__convertTvShowEpisode(kodiEpDetailDict, tmdbEpisodesJson, showId, sno, eno, lang)
+#             kodiEpDetailJson = self._dict2json(kodiEpDetailDict)
+#             self._log_dbg(kodiEpDetailJson)
+#             return kodiEpDetailJson
+            return '{"error":"deprecated"}'
             
         except Exception as e: 
             self._log_err('{0}.{1}: {2}'.format(self.__class__.__name__, sys._getframe().f_code.co_name, str(e)))
 
 
+    def getTvShowImages4Kodi(self, showId, lang):
+        try:
+            showId = self.__revertEntityId(showId)
+            
+            # TV쇼 정보 변환
+            tmdbTvShowJson = self.__getTvShow(showId, lang)
+            self._log_dbg(tmdbTvShowJson)
+            tmdbTvShowDict = self._json2dict(tmdbTvShowJson)
+            
+            # 에피소드 상세내용은 한국 드라마는 한글로, 외화는 영문으로 조회
+            if ('original_language' in tmdbTvShowDict) and (tmdbTvShowDict['original_language'] == 'ko'):
+                lang = 'ko'
+            else:
+                lang = 'en'
+            
+            # 각 시즌별 이미지 목록 조회
+            kodiImagesXml = '<details>'
+            seasonCount = tmdbTvShowDict['number_of_seasons']
+            for season in range(1, (seasonCount+1)):
+                tmdbImagesJson = self.__getTvShowSeasonImages(showId, season, lang)
+                kodiImagesXml += self.__convertTvShowImageList(tmdbImagesJson, showId, season)
+            kodiImagesXml += '</details>'
+            
+            self._log_dbg(kodiImagesXml)
+            return kodiImagesXml
+
+        except Exception as e:
+            self._log_err('{0}.{1}: {2}'.format(self.__class__.__name__, sys._getframe().f_code.co_name, str(e)))
+        
 
 if __name__ == '__main__':
     try:
@@ -797,6 +869,7 @@ if __name__ == '__main__':
         # TV쇼 검색
         #query = '피리부는 사나이'
         query = 'Breaking Bad'
+        #query = 'friends'
         year = ''
         lang = 'ko'
         tvscraper = TMDBScraper(SVC_NAME)
@@ -820,11 +893,15 @@ if __name__ == '__main__':
             # 에피소드 조회
             detailJson = tvscraper.getTvShowEpList4Kodi(showId, lang)
             logger.debug('')
-          
-            # 에피소드 상세정보 조회
-            detailJson = tvscraper.getTvShowEpisode4Kodi(showId, '1', '5', lang)
-            logger.debug('')
+           
+#             # 에피소드 상세정보 조회
+#             detailJson = tvscraper.getTvShowEpisode4Kodi(showId, '1', '5', lang)
+#             logger.debug('')
      
+            # 시즌별 이미지 조회
+            detailJson = tvscraper.getTvShowImages4Kodi(showId, lang)
+            logger.debug('')
+           
             break
         
     except Exception as e:

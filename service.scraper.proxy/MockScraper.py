@@ -35,8 +35,8 @@ class MockScraper(object):
     kodiDetailJson = '{"details":{"id":"","title":"","originaltitle":"","set":"","year":"","premiered":"","language":"","runtime":"","rating":"","votes":"","mpaa":"","tagline":"","outline":"","plot":"","thumb":[],"fanart":[],"genre":[],"country":[],"studio":[],"director":[],"credits":[],"actor":[]}}'
     kodiFanartJson = '{"thumb":""}'
     kodiActorJson = '{"name":"","role":"","thumb":""}'
-    kodiEpListJson = '{"episodeguide":[]}'
-    kodiEpJson = '{"episode":{"id":"","season":"","epnum":"","title":"","aired":"","url":"","thumb":[]}}'
+    kodiEpListJson = '{"episodeguide":[],"language":"en"}'
+    kodiEpJson = '{"episode":{"id":"","uniqueid":"","season":"","epnum":"","title":"","aired":"","url":"","displayseason":"","displayepisode":"","displayafterseason":"","runtime":"","rating":"","votes":"","plot":"","thumb":[],"director":[],"credits":[],"actor":[]}}'
     kodiEpDetailJson = '{"details":{"id":"","season":"","episode":"","title":"","aired":"","uniqueid":"","displayseason":"","displayepisode":"","displayafterseason":"","runtime":"","rating":"","votes":"","plot":"","thumb":[],"director":[],"credits":[],"actor":[]}}'
     
     
@@ -47,7 +47,7 @@ class MockScraper(object):
         self.logger = logging.getLogger(loggerName)
         if (self.logger.name.endswith('ADDON')):
             self.cacheDir = os.path.join(xbmc.translatePath('special://temp'), 'service.scraper.proxy')
-        self._log_dbg(self.cacheDir)
+        self._log_dbg('cacheDir={0}/'.format(self.cacheDir))
             
         try:
             if (not os.path.isdir(self.cacheDir)):
@@ -155,14 +155,35 @@ class MockScraper(object):
             return ''
         
         
-    def __cache_write(self, cacheName, msg):
+    def cache_clear(self):
         try:
-            if (cacheName is None):
+            if (not os.path.isdir(self.cacheDir)):
                 return
             
-            filename = os.path.join(self.cacheDir, cacheName)
-            self._log_dbg('_cache_write: {0}'.format(filename))
-            f = open(filename,'wb')
+            now = datetime.now()
+            fnameList = os.listdir(self.cacheDir)
+            for fname in fnameList:
+                fpath = os.path.join(self.cacheDir, fname)
+                modDate = datetime.fromtimestamp(os.path.getmtime(fpath))
+                limDate = now - timedelta(minutes=15)
+                if (modDate >= limDate):
+                    continue
+                os.remove(fpath)
+                
+            self._log_dbg('cache cleared')
+        except Exception as e: 
+            self._log_dbg('why?')
+            pass
+
+    
+    def __cache_write(self, cacheName, msg):
+        try:
+            if (cacheName == ''):
+                return
+            
+            fpath = os.path.join(self.cacheDir, cacheName)
+            #self._log_dbg('_cache_write: {0}'.format(filename))
+            f = open(fpath,'wb')
             f.write(msg)
             f.close()
         except Exception as e: 
@@ -171,29 +192,29 @@ class MockScraper(object):
     
     def __cache_read(self, cacheName):
         try:
-            if (cacheName is None):
+            if (cacheName == ''):
                 return ''
             
-            filename = '{0}/{1}'.format(self.cacheDir, cacheName)
-            self._log_dbg('_cache_read: {0}'.format(filename))
+            fpath = '{0}/{1}'.format(self.cacheDir, cacheName)
+            #self._log_dbg('_cache_read: {0}'.format(filename))
             
-            # 캐시 파일이 15분 안에 생성되었다면 재사용
-            if os.path.isfile(filename):
-                modDate = datetime.fromtimestamp(os.path.getmtime(filename))
+            # 캐시 파일이 10분 안에 생성되었다면 재사용
+            if os.path.isfile(fpath):
+                modDate = datetime.fromtimestamp(os.path.getmtime(fpath))
                 limDate = datetime.now() - timedelta(minutes=15)
                 if (modDate >= limDate):
-                    with open(filename,'rb') as f:
+                    with open(fpath,'rb') as f:
                         return f.read()
                 else:
                     # 오래된 캐시 파일 삭제
-                    os.remove(filename)
+                    os.remove(fpath)
             
             return ''
         except Exception as e: 
             return ''
 
     
-    def _wget(self, url, cacheName=None):
+    def _wget(self, url, cacheName='', logType=''):
         try:
             self._log_dbg('_wget: {0}'.format(url))
             
@@ -205,6 +226,10 @@ class MockScraper(object):
             resp = urllib2.urlopen(url)
             body = resp.read()
             self.__cache_write(cacheName, body)
+            if (logType == 'dbg'):
+                self._log_dbg(body)
+            elif (logType == 'len'):
+                self._log_dbg('length=%d' % len(body))
             return body
         
         except urllib2.HTTPError as e:
@@ -224,7 +249,6 @@ class MockScraper(object):
         try:
             kodiListDict = json.loads(self.kodiListJson, object_pairs_hook=OrderedDict)
             entityDictTemplate = json.loads(self.kodiEntityJson, object_pairs_hook=OrderedDict)
-            self._log_dbg(kodiListDict)
             
             entityDict = copy.deepcopy(entityDictTemplate)
             entityDict['entity']['title'] = '매트릭스'
@@ -247,7 +271,6 @@ class MockScraper(object):
             kodiDetailDict = json.loads(self.kodiDetailJson, object_pairs_hook=OrderedDict)
             fanartDictTemplate = json.loads(self.kodiFanartJson, object_pairs_hook=OrderedDict)
             actorDictTemplate = json.loads(self.kodiActorJson, object_pairs_hook=OrderedDict)
-            self._log_dbg(kodiDetailDict)
             
             detailsDict = kodiDetailDict['details'] 
             detailsDict['id'] = '603'
@@ -336,7 +359,6 @@ class MockScraper(object):
         try:
             kodiListDict = json.loads(self.kodiListJson, object_pairs_hook=OrderedDict)
             entityDictTemplate = json.loads(self.kodiEntityJson, object_pairs_hook=OrderedDict)
-            self._log_dbg(kodiListDict)
             
             entityDict = copy.deepcopy(entityDictTemplate)
             entityDict['entity']['title'] = '왕좌의 게임'
@@ -359,7 +381,6 @@ class MockScraper(object):
             kodiDetailDict = json.loads(self.kodiDetailJson, object_pairs_hook=OrderedDict)
             fanartDictTemplate = json.loads(self.kodiFanartJson, object_pairs_hook=OrderedDict)
             actorDictTemplate = json.loads(self.kodiActorJson, object_pairs_hook=OrderedDict)
-            self._log_dbg(kodiDetailDict)
             
             detailsDict = kodiDetailDict['details'] 
             detailsDict['id'] = '58449'
@@ -441,7 +462,6 @@ class MockScraper(object):
         try:
             kodiEpListDict = json.loads(self.kodiEpListJson, object_pairs_hook=OrderedDict)
             epDictTemplate = json.loads(self.kodiEpJson, object_pairs_hook=OrderedDict)
-            self._log_dbg(kodiEpListDict)
                         
             epDict = copy.deepcopy(epDictTemplate)
             epDict['episode']['id'] = str(showId)
@@ -517,6 +537,25 @@ class MockScraper(object):
             self._log_err('{0}.{1}: {2}'.format(self.__class__.__name__, sys._getframe().f_code.co_name, str(e)))
 
 
+    def getTvShowImages4Kodi(self, showId, lang):
+        try:
+            imagesXml = '<details>'
+            imagesXml += '<thumb aspect="poster">http://thetvdb.com/banners/posters/81189-10.jpg</thumb>'
+            imagesXml += '<thumb aspect="poster">http://thetvdb.com/banners/posters/81189-22.jpg</thumb>'
+            imagesXml += '<thumb aspect="poster" type="season" season="1">http://thetvdb.com/banners/seasons/81189-1-10.jpg</thumb>'
+            imagesXml += '<thumb aspect="poster" type="season" season="2">http://thetvdb.com/banners/seasons/81189-2-9.jpg</thumb>'
+            imagesXml += '<fanart url="http://thetvdb.com/banners/">'
+            imagesXml += '<thumb dim="1920x1080" colors="" preview="_cache/fanart/original/81189-25.jpg">fanart/original/81189-25.jpg</thumb>'
+            imagesXml += '<thumb dim="1920x1080" colors="|236,204,191|81,50,47|84,80,94|" preview="_cache/fanart/original/81189-13.jpg">fanart/original/81189-13.jpg</thumb>'
+            imagesXml += '</fanart>'
+            imagesXml += '</details>'
+            self._log_dbg(imagesXml)
+            return imagesXml
+
+        except Exception as e:
+            self._log_err('{0}.{1}: {2}'.format(self.__class__.__name__, sys._getframe().f_code.co_name, str(e)))
+        
+
 if __name__ == '__main__':
     try:
         # 기본 인코딩을 UTF-8로 설정
@@ -533,26 +572,26 @@ if __name__ == '__main__':
         logger = logging.getLogger(SVC_NAME)
         logger.info('==[STARTED]======================================')
         
-        # 영화 검색
-        query = '배트맨 대 슈퍼맨'
-        year = ''
-        lang = 'ko'
-        scraper = MockScraper(SVC_NAME)
-        listJson = scraper.findMovies4Kodi(query, year, lang)
-        logger.debug('')
-          
-        listDict = json.loads(listJson, object_pairs_hook=OrderedDict)
-        logger.debug(listDict)
-        for resultDict in listDict['results']:
-            # 검색결과에서 영화ID 추출
-            movieId = resultDict['entity']['id']
-            logger.debug('movieId={0}'.format(movieId))
-            title = resultDict['entity']['title']
-            logger.debug('title={0}'.format(title))
-              
-            # 상세정보 조회
-            detailJson = scraper.getMovieDetail4Kodi(movieId, lang)
-            logger.debug('')
+#         # 영화 검색
+#         query = '배트맨 대 슈퍼맨'
+#         year = ''
+#         lang = 'ko'
+#         scraper = MockScraper(SVC_NAME)
+#         listJson = scraper.findMovies4Kodi(query, year, lang)
+#         logger.debug('')
+#           
+#         listDict = json.loads(listJson, object_pairs_hook=OrderedDict)
+#         logger.debug(listDict)
+#         for resultDict in listDict['results']:
+#             # 검색결과에서 영화ID 추출
+#             movieId = resultDict['entity']['id']
+#             logger.debug('movieId={0}'.format(movieId))
+#             title = resultDict['entity']['title']
+#             logger.debug('title={0}'.format(title))
+#               
+#             # 상세정보 조회
+#             detailJson = scraper.getMovieDetail4Kodi(movieId, lang)
+#             logger.debug('')
     
         # TV쇼 검색
         query = '왕좌의 게임'
@@ -571,12 +610,16 @@ if __name__ == '__main__':
             title = resultDict['entity']['title']
             logger.debug('title={0}'.format(title))
              
-            # 상세정보 조회
-            detailJson = scraper.getTvShowDetail4Kodi(showId, lang)
-            logger.debug('')
-    
+#             # 상세정보 조회
+#             detailJson = scraper.getTvShowDetail4Kodi(showId, lang)
+#             logger.debug('')
+#     
+#             # 에피소드목록 조회
+#             detailJson = scraper.getTvShowEpList4Kodi(showId, lang)
+#             logger.debug('')
+            
             # 에피소드목록 조회
-            detailJson = scraper.getTvShowEpList4Kodi(showId, lang)
+            imagesXml = scraper.getTvShowImages4Kodi(showId)
             logger.debug('')
     
     except Exception as e:

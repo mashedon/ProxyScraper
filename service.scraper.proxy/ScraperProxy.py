@@ -210,7 +210,7 @@ class ScraperProxyHandler(BaseHTTPRequestHandler):
             log_err(str(e))
 
     
-    # TV쇼 에피소드목록 조회
+    # TV쇼 에피소드 목록 조회
     def getTvShowEpisode(self, showId, sno, eno, lang):
         try:
             if showId.startswith(TMDBScraper.showIdPrefix):
@@ -222,6 +222,25 @@ class ScraperProxyHandler(BaseHTTPRequestHandler):
             elif showId.startswith(MockScraper.showIdPrefix):
                 # 테스트용
                 return MockScraper(SVC_NAME).getTvShowEpisode4Kodi(showId, sno, eno, lang)
+            else:
+                return '{"error":"Invalid Id","id":"{0}"}'.format(showId)
+    
+        except Exception as e:
+            log_err(str(e))
+
+    
+    # TV쇼 이미지 목록 조회
+    def getTvShowImages(self, showId, lang):
+        try:
+            if showId.startswith(TMDBScraper.showIdPrefix):
+                # TMDB TV 에피소드 목록 조회
+                return TMDBScraper(SVC_NAME).getTvShowImages4Kodi(showId, lang)
+            elif showId.startswith(DaumScraper.showIdPrefix):
+                # Daum TV 에피소드 목록 조회
+                return DaumScraper(SVC_NAME).getTvShowImages4Kodi(showId, lang)
+            elif showId.startswith(MockScraper.showIdPrefix):
+                # 테스트용
+                return MockScraper(SVC_NAME).getTvShowImages4Kodi(showId, lang)
             else:
                 return '{"error":"Invalid Id","id":"{0}"}'.format(showId)
     
@@ -291,25 +310,25 @@ class ScraperProxyHandler(BaseHTTPRequestHandler):
             entityId = ''
             sno = ''
             eno = ''
-            if 'query' in url_params:
+            if ('query' in url_params):
                 query = url_params['query'][0]
                 log_dbg('query={0}'.format(query))
-            if 'year' in url_params:
+            if ('year' in url_params):
                 year = url_params['year'][0]
                 log_dbg('year={0}'.format(year))
-            if 'language' in url_params:
+            if ('language' in url_params):
                 lang = url_params['language'][0]
                 log_dbg('lang={0}'.format(lang))
-            if 'site' in url_params:
+            if ('site' in url_params):
                 site = url_params['site'][0]
                 log_dbg('site={0}'.format(site))
-            if 'id' in url_params:
+            if ('id' in url_params):
                 entityId = url_params['id'][0]
                 log_dbg('id={0}'.format(entityId))
-            if 'sno' in url_params:
+            if ('sno' in url_params):
                 sno = url_params['sno'][0]
                 log_dbg('sno={0}'.format(sno))
-            if 'eno' in url_params:
+            if ('eno' in url_params):
                 eno = url_params['eno'][0]
                 log_dbg('eno={0}'.format(eno))
             
@@ -351,17 +370,23 @@ class ScraperProxyHandler(BaseHTTPRequestHandler):
                     return
             
             elif (o.path == '/tv/episode/all'):
-                # 에피소드 목록 조회
+                # 에피소드 목록+상세 조회
                 if len(entityId) > 0:
-                    lang = 'ko'
                     resp = self.getTvShowEpList(entityId, lang)
                     self.sendRespMsg(resp)
                     return
             
-            elif (o.path == '/tv/episode'):
-                # 에피소드 상세정보 조회
+#             elif (o.path == '/tv/episode'):
+#                 # 에피소드 상세정보 조회
+#                 if len(entityId) > 0:
+#                     resp = self.getTvShowEpisode(entityId, sno, eno, lang)
+#                     self.sendRespMsg(resp)
+#                     return
+            
+            elif (o.path == '/tv/images'):
+                # TV시리즈 이미지 조회
                 if len(entityId) > 0:
-                    resp = self.getTvShowEpisode(entityId, sno, eno, lang)
+                    resp = self.getTvShowImages(entityId, lang)
                     self.sendRespMsg(resp)
                     return
             
@@ -401,6 +426,9 @@ if __name__ == '__main__':
         __logger__ = logging.getLogger(SVC_NAME)
         
         log_inf('==[STARTED]======================================')
+        
+        # 오래된 캐시 파일 삭제
+        MockScraper(SVC_NAME).cache_clear()
         
         #Create a web server and define the handler to manage the
         #incoming request

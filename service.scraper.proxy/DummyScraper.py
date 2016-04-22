@@ -130,7 +130,7 @@ class DummyScraper(MockScraper):
             kodiEntityDict = json.loads(self.kodiEntityJson, object_pairs_hook=OrderedDict)
             kodiEntityDict['entity']['title'] = query
             kodiEntityDict['entity']['year'] = year
-            kodiEntityDict['entity']['language'] = 'ko'
+            kodiEntityDict['entity']['language'] = lang
             kodiEntityDict['entity']['id'] = movieId
             kodiListDict['results'].append(kodiEntityDict)
             kodiListJson = json.dumps(kodiListDict, ensure_ascii=False, separators=(',', ':'))
@@ -158,8 +158,8 @@ class DummyScraper(MockScraper):
                 kodiMovieDict['details']['id'] = movieId
                 kodiMovieDict['details']['title'] = title
                 kodiMovieDict['details']['year'] = year
-                kodiMovieDict['details']['plot'] = title
-                kodiMovieDict['details']['thumb'] = 'http://127.0.0.1/image/poster.jpg'
+                kodiMovieDict['details']['plot'] = 'Nothing Found. Change your keyword and find again.'
+                kodiMovieDict['details']['thumb'] = ''
                 self._log_dbg(kodiMovieDict)
             
             kodiMovieJson = json.dumps(kodiMovieDict, ensure_ascii=False, separators=(',', ':'))
@@ -175,6 +175,8 @@ if __name__ == '__main__':
         # 기본 인코딩을 UTF-8로 설정
         reload(sys)
         sys.setdefaultencoding('utf-8')
+        
+        print datetime.now()
         
         # Logger 초기화
         SVC_NAME = 'DUMMY'

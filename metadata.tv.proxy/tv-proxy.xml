@@ -152,8 +152,8 @@
 			<RegExp input="$$1" output="\1" dest="11">
 				<expression noclean="1">"language":"(.*?)"</expression>
 			</RegExp>
-			<RegExp input="$$1" output="&lt;episode&gt;&lt;id&gt;\1&lt;/id&gt;&lt;season&gt;\2&lt;/season&gt;&lt;epnum&gt;\3&lt;/epnum&gt;&lt;title&gt;\4&lt;/title&gt;&lt;aired&gt;\5&lt;/aired&gt;&lt;url&gt;http://$INFO[host]/tv/episode?id=\1&amp;amp;sno=\2&amp;amp;eno=\3&amp;amp;language=$$11&lt;/url&gt;&lt;/episode&gt;" dest="10">
-				<expression repeat="yes">"id":"(.*?)","season":"(.*?)","epnum":"(.*?)","title":"(.*?)","aired":"(.*?)"</expression>
+			<RegExp input="$$1" output="&lt;episode&gt;&lt;id&gt;\1&lt;/id&gt;&lt;season&gt;\3&lt;/season&gt;&lt;epnum&gt;\4&lt;/epnum&gt;&lt;title&gt;&lt;/title&gt;&lt;aired&gt;&lt;/aired&gt;&lt;url cache=&quot;\2_episodeguide.json&quot;&gt;http://$INFO[host]/tv/episode/all?id=\2&amp;amp;language=$$11&lt;/url&gt;&lt;/episode&gt;" dest="10">
+				<expression repeat="yes">"id":"(.*?)","uniqueid":"(.*?)-(.*?)-(.*?)",</expression>
 			</RegExp>
 			<expression noclean="1"/>
 		</RegExp>
@@ -164,65 +164,68 @@
 	<!-- returns:	results in xml format <details><id>*</id><season>*</season><episode>*</episode><title>*</title><aired>*</aired><plot>*</plot><plot>*</plot> -->
 	<GetEpisodeDetails dest="3">
 		<RegExp input="$$10" output="&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot; standalone=&quot;yes&quot;?&gt;&lt;details&gt;\1&lt;/details&gt;" dest="3">
-			<RegExp input="$$1" output="&lt;id&gt;\1&lt;/id&gt;" dest="10">
-				<expression noclean="1">"id":"(.*?)"</expression>
+			<RegExp input="$$1" output="\1" dest="9">
+				<expression noclean="1">({"id":"$$2",.*?,"actor":\[.*?\]})</expression>
 			</RegExp>
-			<RegExp input="$$1" output="&lt;season&gt;\1&lt;/season&gt;" dest="10+">
+			<RegExp input="$$2" output="&lt;id&gt;\1&lt;/id&gt;" dest="10">
+				<expression/>
+			</RegExp>
+			<RegExp input="$$9" output="&lt;season&gt;\1&lt;/season&gt;" dest="10+">
 				<expression noclean="1">"season":"(.*?)"</expression>
 			</RegExp>
-			<RegExp input="$$1" output="&lt;episode&gt;\1&lt;/episode&gt;" dest="10+">
+			<RegExp input="$$9" output="&lt;episode&gt;\1&lt;/episode&gt;" dest="10+">
 				<expression noclean="1">"epnum":"(.*?)"</expression>
 			</RegExp>
-			<RegExp input="$$1" output="&lt;title&gt;\1&lt;/title&gt;" dest="10+">
+			<RegExp input="$$9" output="&lt;title&gt;\1&lt;/title&gt;" dest="10+">
 				<expression noclean="1">"title":"(.*?)"</expression>
 			</RegExp>
-			<RegExp input="$$1" output="&lt;aired&gt;\1&lt;/aired&gt;" dest="10+">
+			<RegExp input="$$9" output="&lt;aired&gt;\1&lt;/aired&gt;" dest="10+">
 				<expression noclean="1">"aired":"(.*?)"</expression>
 			</RegExp>
-			<RegExp input="$$1" output="&lt;uniqueid&gt;\1&lt;/uniqueid&gt;" dest="10+">
+			<RegExp input="$$9" output="&lt;uniqueid&gt;\1&lt;/uniqueid&gt;" dest="10+">
 				<expression noclean="1">"uniqueid":"(.*?)"</expression>
 			</RegExp>
-			<RegExp input="$$1" output="&lt;displayseason&gt;\1&lt;/displayseason&gt;" dest="10+">
+			<RegExp input="$$9" output="&lt;displayseason&gt;\1&lt;/displayseason&gt;" dest="10+">
 				<expression noclean="1">"displayseason":"(.*?)"</expression>
 			</RegExp>
-			<RegExp input="$$1" output="&lt;displayepisode&gt;\1&lt;/displayepisode&gt;" dest="10+">
+			<RegExp input="$$9" output="&lt;displayepisode&gt;\1&lt;/displayepisode&gt;" dest="10+">
 				<expression noclean="1">"displayepisode":"(.*?)"</expression>
 			</RegExp>
-			<RegExp input="$$1" output="&lt;displayafterseason&gt;\1&lt;/displayafterseason&gt;" dest="10+">
+			<RegExp input="$$9" output="&lt;displayafterseason&gt;\1&lt;/displayafterseason&gt;" dest="10+">
 				<expression noclean="1">"displayafterseason":"(.*?)"</expression>
 			</RegExp>
-			<RegExp input="$$1" output="&lt;runtime&gt;\1&lt;/runtime&gt;" dest="10+">
+			<RegExp input="$$9" output="&lt;runtime&gt;\1&lt;/runtime&gt;" dest="10+">
 				<expression noclean="1">"runtime":"(.*?)"</expression>
 			</RegExp>
-			<RegExp input="$$1" output="&lt;rating&gt;\1&lt;/rating&gt;" dest="10+">
+			<RegExp input="$$9" output="&lt;rating&gt;\1&lt;/rating&gt;" dest="10+">
 				<expression noclean="1">"rating":"(.*?)"</expression>
 			</RegExp>
-			<RegExp input="$$1" output="&lt;votes&gt;\1&lt;/votes&gt;" dest="10+">
+			<RegExp input="$$9" output="&lt;votes&gt;\1&lt;/votes&gt;" dest="10+">
 				<expression noclean="1">"votes":"(.*?)"</expression>
 			</RegExp>
-			<RegExp input="$$1" output="&lt;plot&gt;\1&lt;/plot&gt;" dest="10+">
+			<RegExp input="$$9" output="&lt;plot&gt;\1&lt;/plot&gt;" dest="10+">
 				<expression noclean="1">"plot":"(.*?)"</expression>
 			</RegExp>
 			<RegExp input="$$11" output="&lt;thumb&gt;\1&lt;/thumb&gt;" dest="10+">
-				<RegExp input="$$1" output="\1" dest="11">
+				<RegExp input="$$9" output="\1" dest="11">
 					<expression>"thumb":\[(.*?)\]</expression>
 				</RegExp>
 				<expression repeat="yes">"(.*?)"</expression>
 			</RegExp>
 			<RegExp input="$$11" output="&lt;director&gt;\1&lt;/director&gt;" dest="10+">
-				<RegExp input="$$1" output="\1" dest="11">
+				<RegExp input="$$9" output="\1" dest="11">
 					<expression>"director":\[(.*?)\]</expression>
 				</RegExp>
 				<expression repeat="yes">"(.*?)"</expression>
 			</RegExp>
 			<RegExp input="$$11" output="&lt;credits&gt;\1&lt;/credits&gt;" dest="10+">
-				<RegExp input="$$1" output="\1" dest="11">
+				<RegExp input="$$9" output="\1" dest="11">
 					<expression>"credits":\[(.*?)\]</expression>
 				</RegExp>
 				<expression repeat="yes">"(.*?)"</expression>
 			</RegExp>
 			<RegExp input="$$11" output="&lt;actor&gt;&lt;name&gt;\1&lt;/name&gt;&lt;role&gt;\2&lt;/role&gt;&lt;thumb&gt;\3&lt;/thumb&gt;&lt;/actor&gt;" dest="10+">
-				<RegExp input="$$1" output="\1" dest="11">
+				<RegExp input="$$9" output="\1" dest="11">
 					<expression>"actor":\[(.*?)\]</expression>
 				</RegExp>
 				<expression repeat="yes">{"name":"(.*?)","role":"(.*?)","thumb":"(.*?)"}</expression>
@@ -231,4 +234,19 @@
 		</RegExp>
 	</GetEpisodeDetails>
 
+	<GetArt dest="3">
+		<RegExp input="$$10" output="&lt;details&gt;\1&lt;/details&gt;" dest="3">
+			<RegExp input="$$1" output="&lt;url function=&quot;ParseArt&quot; cache=&quot;\1_images.xml&quot;&gt;http://$INFO[host]/tv/images?id=\1&lt;/url&gt;" dest="10">
+				<expression noclean="1"/>
+			</RegExp>
+			<expression noclean="1"/>
+		</RegExp>
+	</GetArt>
+	
+	<ParseArt dest="3">
+		<RegExp input="$$1" output="\1;" dest="3">
+			<expression noclean="1"/>
+		</RegExp>
+	</ParseArt>
+	
 </scraper>

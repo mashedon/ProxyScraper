@@ -55,6 +55,17 @@ def log_err(txt):
 #the browser 
 class ScraperProxyHandler(BaseHTTPRequestHandler):
     
+    def refineQuery(self, query):
+        try:
+            query = re.sub('[`~!@#$%^\&\(\)\-_=+\[\{\]\}\;\'\,\.]', ' ', query)  # 특수문자 제거
+            query = re.sub('\s\s*', ' ', query)                                  # 연속된 공백 하나로
+            query = query.strip().rstrip()                                       # 앞,뒤 공백 trim
+            return query
+            
+        except Exception as e:
+            return ''
+        
+        
     def mergeList(self, listJson1, listJson2):
         try:
             # 두 개의 검색 결과를 merge
@@ -69,22 +80,20 @@ class ScraperProxyHandler(BaseHTTPRequestHandler):
         
         
     # 영화 검색
-    def findMovies(self, query, year, lang, site):
+    def findMovies(self, query, year, lang, metaSrc):
         try:
-            query = re.sub('[\.\[\]\-=:]', ' ', query)  # 특수문자 제거
-            query = re.sub(' [ ]+', ' ', query)         # 연속된 공백은 공백 하나로 변경 
-            query = query.strip().rstrip()              # 앞,뒤 공백 trim
+            query = self.refineQuery(query)
             
-            if (site == 'tmdb'):
+            if (metaSrc == 'tmdb'):
                 # TMDB에서 검색
                 return TMDBScraper(SVC_NAME).findMovies4Kodi(query, year, lang) 
-            elif (site == 'daum'):
+            elif (metaSrc == 'daum'):
                 # Daum에서 검색
                 return DaumScraper(SVC_NAME).findMovies4Kodi(query, year, lang)
-            elif (site == 'dummy'):
+            elif (metaSrc == 'dummy'):
                 # Dummy 검색결과 생성
                 return DummyScraper(SVC_NAME).findMovies4Kodi(query, year, lang)
-            elif (site == 'mock'):
+            elif (metaSrc == 'mock'):
                 # 테스트용
                 return MockScraper(SVC_NAME).findMovies4Kodi(query, year, lang)
             else:
@@ -110,20 +119,20 @@ class ScraperProxyHandler(BaseHTTPRequestHandler):
     
     
     # 영화 상세정보 조회
-    def getMovieDetail(self, movieId, lang):
+    def getMovieDetail(self, movieId, lang, imageSrc):
         try:
             if movieId.startswith(TMDBScraper.movieIdPrefix) or movieId.startswith('tt') :
                 # TMDB 영화정보 조회
-                return TMDBScraper(SVC_NAME).getMovieDetail4Kodi(movieId, lang)
+                return TMDBScraper(SVC_NAME).getMovieDetail4Kodi(movieId, lang, imageSrc)
             elif movieId.startswith(DaumScraper.movieIdPrefix):
                 # Daum 영화정보 조회
-                return DaumScraper(SVC_NAME).getMovieDetail4Kodi(movieId, lang)
+                return DaumScraper(SVC_NAME).getMovieDetail4Kodi(movieId, lang, imageSrc)
             elif movieId.startswith(DummyScraper.movieIdPrefix):
                 # Dummy 영화정보 생성
-                return DummyScraper(SVC_NAME).getMovieDetail4Kodi(movieId, lang)
+                return DummyScraper(SVC_NAME).getMovieDetail4Kodi(movieId, lang, imageSrc)
             elif movieId.startswith(MockScraper.movieIdPrefix):
                 # 테스트용
-                return MockScraper(SVC_NAME).getMovieDetail4Kodi(movieId, lang)
+                return MockScraper(SVC_NAME).getMovieDetail4Kodi(movieId, lang, imageSrc)
             else:
                 return '{"error":"Invalid Id","id":"{0}"}'.format(movieId)
     
@@ -132,22 +141,22 @@ class ScraperProxyHandler(BaseHTTPRequestHandler):
 
     
     # TV쇼 검색
-    def findTvShows(self, query, year, lang, site):
+    def findTvShows(self, query, year, lang, metaSrc):
         try:
             query = re.sub('[\.\[\]\-=:]', ' ', query)  # 특수문자 제거
             query = re.sub(' [ ]+', ' ', query)         # 연속된 공백은 공백 하나로 변경 
             query = query.strip().rstrip()              # 앞,뒤 공백 trim
             
-            if (site == 'tmdb'):
+            if (metaSrc == 'tmdb'):
                 # TMDB에서 검색
                 return TMDBScraper(SVC_NAME).findTvShows4Kodi(query, year, lang)
-            elif (site == 'daum'):
+            elif (metaSrc == 'daum'):
                 # Daum에서 검색
                 return DaumScraper(SVC_NAME).findTvShows4Kodi(query, year, lang)
-            elif (site == 'dummy'):
+            elif (metaSrc == 'dummy'):
                 # Dummy 검색결과 생성
                 return DummyScraper(SVC_NAME).findTvShows4Kodi(query, year, lang)
-            elif (site == 'mock'):
+            elif (metaSrc == 'mock'):
                 # 테스트용
                 return MockScraper(SVC_NAME).findTvShows4Kodi(query, year, lang)
             else:
@@ -305,23 +314,18 @@ class ScraperProxyHandler(BaseHTTPRequestHandler):
             url_params = parse_qs(o.query)
             query = ''
             year = ''
-            lang = 'ko'
-            site = 'all'
             entityId = ''
             sno = ''
             eno = ''
+            lang = 'ko'
+            metaSrc = 'all'
+            imageSrc  = ''
             if ('query' in url_params):
                 query = url_params['query'][0]
                 log_dbg('query={0}'.format(query))
             if ('year' in url_params):
                 year = url_params['year'][0]
                 log_dbg('year={0}'.format(year))
-            if ('language' in url_params):
-                lang = url_params['language'][0]
-                log_dbg('lang={0}'.format(lang))
-            if ('site' in url_params):
-                site = url_params['site'][0]
-                log_dbg('site={0}'.format(site))
             if ('id' in url_params):
                 entityId = url_params['id'][0]
                 log_dbg('id={0}'.format(entityId))
@@ -331,6 +335,17 @@ class ScraperProxyHandler(BaseHTTPRequestHandler):
             if ('eno' in url_params):
                 eno = url_params['eno'][0]
                 log_dbg('eno={0}'.format(eno))
+            if ('language' in url_params):
+                lang = url_params['language'][0]
+                log_dbg('language={0}'.format(lang))
+            if ('metasrc' in url_params):
+                metaSrc = url_params['metasrc'][0]
+                log_dbg('metasrc={0}'.format(metaSrc))
+            if ('tmdbimg' in url_params):
+                tmdbimg = url_params['tmdbimg'][0]
+                log_dbg('tmdbimg={0}'.format(tmdbimg))
+                if (tmdbimg == 'true'):
+                    imageSrc = 'tmdb'
             
             # 파라메터 값 검사
             yearRegex = re.compile('[0-9]*')
@@ -344,21 +359,21 @@ class ScraperProxyHandler(BaseHTTPRequestHandler):
             if (o.path == '/search/movie'):
                 # 영화 검색
                 if len(query) > 0:
-                    resp = self.findMovies(query, year, lang, site)
+                    resp = self.findMovies(query, year, lang, metaSrc)
                     self.sendRespMsg(resp)
                     return
                 
             elif (o.path == '/movie'):
                 # 영화 상세정보 조회
                 if len(entityId) > 0:
-                    resp = self.getMovieDetail(entityId, lang)
+                    resp = self.getMovieDetail(entityId, lang, imageSrc)
                     self.sendRespMsg(resp)
                     return
             
             elif (o.path == '/search/tv'):
                 # TV쇼 검색
                 if len(query) > 0:
-                    resp = self.findTvShows(query, year, lang, site)
+                    resp = self.findTvShows(query, year, lang, metaSrc)
                     self.sendRespMsg(resp)
                     return
             

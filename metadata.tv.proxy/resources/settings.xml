@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <settings>
-    <setting label="30000" type="select" values="en|ko" id="language" default="ko"/>
-    <setting label="30001" type="select" values="all|daum|tmdb" id="site" default="all"/>
-    <setting label="30002" type="text" id="host" default="127.0.0.1:8880" visible="true"/>
+    <setting label="30000" type="text"   id="host" default="127.0.0.1:8880" visible="true"/>
+    <setting label="30010" type="select" id="language" values="en|ko" default="ko"/>
+    <setting label="30020" type="select" id="metasrc" values="all|daum|tmdb" default="all"/>
+    <setting label="30030" type="select" id="titfmt" values="default|dual|original" default="default"/>
 </settings>

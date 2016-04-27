@@ -279,7 +279,7 @@ class DaumScraper(MockScraper):
         except Exception as e:
             self._log_err('{0}.{1}: {2}'.format(self.__class__.__name__, sys._getframe().f_code.co_name, str(e)))
 
-
+    
     def __convertList(self, kodiListDict, daumListJson, year, lang):
         try:
             kodiEntityDictTemplate = self._json2dict(self.kodiEntityJson)
@@ -302,7 +302,7 @@ class DaumScraper(MockScraper):
                     releaseYear = str(daumDataDict['prodYear'])
                     
                     # 요청항목에 연도가 있다면, 같은 연도 영화만 검색
-                    if (len(year) == 4) and (year != releaseYear):
+                    if (not self._year_filter(releaseYear, year)):
                         continue
                     
                     # 제목이 비어있으면 skip
@@ -323,6 +323,7 @@ class DaumScraper(MockScraper):
     
             
     def __convertMovie(self, kodiDetailDict, daumMovieJson, lang):
+        
         try:
             daumMovieDict = self._json2dict(daumMovieJson)
             daumDataDict = daumMovieDict['data']
@@ -332,15 +333,19 @@ class DaumScraper(MockScraper):
             if (country == '한국') or (country == '대한민국'):
                 # 국내 영화는 한글제목
                 title = daumDataDict['titleKo']
-                originalTitle = daumDataDict['titleKo']
+                originalTitle = ''
             elif (lang == 'en'):
                 # 영문 메타정보를 요청하였고 외국영화인 경우, 영문 제목
-                title = daumDataDict['titleEn']
-                originalTitle = daumDataDict['titleEn']
+                title = self._nvl(daumDataDict['titleEn'], daumDataDict['titleKo'])
+                originalTitle = self._nvl(daumDataDict['titleOrigin'], daumDataDict['titleEn'])
             else:
                 # 한글 메타정보를 요청한 경우, 한글 제목
                 title = daumDataDict['titleKo']
-                originalTitle = daumDataDict['titleEn']
+                originalTitle = self._nvl(daumDataDict['titleOrigin'], daumDataDict['titleEn'])
+            
+            # 제목과 원제가 동일하면 원제 삭제
+            if (originalTitle == title):
+                originalTitle = ''
             
             releaseDate = kodiDetailDict['premiered']
             if ('releaseDate' in daumDataDict) and len(str(daumDataDict['releaseDate']))==8:
@@ -453,14 +458,14 @@ class DaumScraper(MockScraper):
             for imageDict in daumImagesDict['data']:
                 if imageDict['photoCategory'] == '1':
                     # 포스터
-                    if (i > 10):
+                    if (i >= 10):
                         continue
                     kodiDetailDict['thumb'].append(imageDict['fullname'])
                     i = i + 1 
                     
                 elif imageDict['photoCategory'] == '2':
                     # 팬아트 
-                    if (j > 10):
+                    if (j >= 10):
                         continue
                     fanartDict = copy.deepcopy(fanartDictTemplate)
                     fanartDict['thumb'] = imageDict['fullname']
@@ -601,7 +606,7 @@ class DaumScraper(MockScraper):
             i = 0
             for daumEpDict in daumEpisodesDict:
                 title = daumEpDict['title']
-                if (title == None) or (title == ''):
+                if (title is None) or (title == ''):
                     title = self._title_format(daumEpDict['name'], lang)
                     
                 eno = str(daumEpDict['sequence'])
@@ -722,8 +727,9 @@ class DaumScraper(MockScraper):
         try:
             kodiListDict = self._json2dict(self.kodiListJson)
             self._log_dbg('{0}.{1}: query={2}, year={3}, lang={4}'.format(self.__class__.__name__, sys._getframe().f_code.co_name, query, year, lang))
-            if re.search('.*[ㄱ-ㅎㅏ-ㅣ가-힣]+.*', query):
-                # 한글은 공백을 제거하면 더 잘 찾음
+            #if re.search('[ㄱ-ㅎㅏ-ㅣ가-힣1-9 ]+', query):
+            if not re.search('[a-zA-Z]+', query):
+                # 한글 제목은 공백을 제거하면 더 잘 찾음
                 query = re.sub('[ ]*','', query)
             year = str(year)
             
@@ -738,7 +744,7 @@ class DaumScraper(MockScraper):
 
 
     # 영화 상세정보 조회
-    def getMovieDetail4Kodi(self, movieId, lang):
+    def getMovieDetail4Kodi(self, movieId, lang, imageSrc):
         try:
             kodiMovieDict = self._json2dict(self.kodiDetailJson)
             self._log_dbg('{0}.{1}: movieId={2}, lang={3}'.format(self.__class__.__name__, sys._getframe().f_code.co_name, movieId, lang))
@@ -755,13 +761,14 @@ class DaumScraper(MockScraper):
             if daumCreditsJson:
                 kodiMovieDict['details'] = self.__convertCredits(kodiMovieDict['details'], daumCreditsJson)
                 self._log_dbg(kodiMovieDict)
-             
-            # TMDB 이미지 정보 추가
-            if (kodiMovieDict['details']['titleEn'] != ''):
-                tmdbListJson = self.__findTMDBMovieImages(kodiMovieDict['details']['titleEn'], kodiMovieDict['details']['year'])
-                if tmdbListJson:
-                    kodiMovieDict['details'] = self.__convertTMDBImages(kodiMovieDict['details'], tmdbListJson)
-                    self._log_dbg(kodiMovieDict)
+            
+            if (imageSrc == 'tmdb'): 
+                # TMDB 이미지 정보 추가
+                if (kodiMovieDict['details']['titleEn'] != ''):
+                    tmdbListJson = self.__findTMDBMovieImages(kodiMovieDict['details']['titleEn'], kodiMovieDict['details']['year'])
+                    if tmdbListJson:
+                        kodiMovieDict['details'] = self.__convertTMDBImages(kodiMovieDict['details'], tmdbListJson)
+                        self._log_dbg(kodiMovieDict)
             
             # 이미지 정보 변환 
             daumImagesJson = self.__getMovieImages(movieId)
@@ -933,28 +940,33 @@ if __name__ == '__main__':
         logger = logging.getLogger(SVC_NAME)
         logger.info('==[STARTED]======================================')
         
-#         # 영화 검색
-#         query = 'loose change'
-#         year = ''
-#         lang = 'en'
-#         scraper = DaumScraper(SVC_NAME)
-#         listJson = scraper.findMovies4Kodi(query, year, lang)
-#         logger.debug('')
-#            
-#         listDict = json.loads(listJson, object_pairs_hook=OrderedDict)
-#         logger.debug(listDict)
-#         for resultDict in listDict['results']:
-#             # 검색결과에서 영화ID 추출
-#             movieId = resultDict['entity']['id']
-#             logger.debug('movieId={0}'.format(movieId))
-#             title = resultDict['entity']['title']
-#             logger.debug('title={0}'.format(title))
-#                 
-#             # 상세정보 조회
-#             detailJson = scraper.getMovieDetail4Kodi(movieId, lang)
-#             logger.debug('')
-#             
-#             break
+        # 영화 검색
+        #query = '지금만나러갑니다.'
+        query = 'loose change'
+        #query = '장화 홍련'
+        #query = '올드보이'
+        year = ''
+        lang = 'ko'
+        scraper = DaumScraper(SVC_NAME)
+        listJson = scraper.findMovies4Kodi(query, year, lang)
+        logger.debug('')
+            
+        listDict = json.loads(listJson, object_pairs_hook=OrderedDict)
+        logger.debug(listDict)
+        for resultDict in listDict['results']:
+            # 검색결과에서 영화ID 추출
+            movieId = resultDict['entity']['id']
+            logger.debug('movieId={0}'.format(movieId))
+            title = resultDict['entity']['title']
+            logger.debug('title={0}'.format(title))
+                 
+            # 상세정보 조회
+            detailJson = scraper.getMovieDetail4Kodi(movieId, lang, 'tmdb')
+            logger.debug('')
+            
+            break
+        
+        exit()
             
         # TV쇼 검색
         #query = '태양의 후예'
@@ -995,4 +1007,4 @@ if __name__ == '__main__':
             break
     
     except Exception as e:
-        logger.error(str(e))
+        print str(e)

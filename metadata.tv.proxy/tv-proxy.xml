@@ -47,8 +47,34 @@
 			<RegExp input="$$1" output="&lt;id&gt;\1&lt;/id&gt;" dest="10">
 				<expression noclean="1">"id":"(.*?)"</expression>
 			</RegExp>
+			<!--
 			<RegExp input="$$1" output="&lt;title&gt;\1&lt;/title&gt;" dest="10+">
 				<expression noclean="1">"title":"(.*?)"</expression>
+			</RegExp>
+			-->
+			<RegExp input="$INFO[titfmt]" output="$$11" dest="10+">
+				<RegExp input="$$1" output="&lt;title&gt;\1&lt;/title&gt;" dest="11">
+					<expression noclean="1">"title":"(.*?)"</expression>
+				</RegExp>
+				<expression>default</expression>
+			</RegExp>
+			<RegExp input="$INFO[titfmt]" output="$$11" dest="10+">
+				<RegExp input="$$1" output="&lt;title&gt;\1&lt;/title&gt;" dest="11">
+					<expression noclean="1">"title":"(.*?)"</expression>
+				</RegExp>
+				<RegExp input="$$1" output="&lt;title&gt;\1 (\2)&lt;/title&gt;" dest="11">
+					<expression noclean="1">"title":"(.*?)","originaltitle":"([^"]+)"</expression>
+				</RegExp>
+				<expression>dual</expression>
+			</RegExp>
+			<RegExp input="$INFO[titfmt]" output="$$11" dest="10+">
+				<RegExp input="$$1" output="&lt;title&gt;\1&lt;/title&gt;" dest="11">
+					<expression noclean="1">"title":"(.*?)"</expression>
+				</RegExp>
+				<RegExp input="$$1" output="&lt;title&gt;\1&lt;/title&gt;" dest="11">
+					<expression noclean="1">"originaltitle":"([^"]+)"</expression>
+				</RegExp>
+				<expression>original</expression>
 			</RegExp>
 			<RegExp input="$$1" output="&lt;originaltitle&gt;\1&lt;/originaltitle&gt;" dest="10+">
 				<expression noclean="1">"originaltitle":"(.*?)"</expression>

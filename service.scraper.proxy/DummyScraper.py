@@ -142,7 +142,7 @@ class DummyScraper(MockScraper):
 
 
     # 영화 상세정보 조회
-    def getMovieDetail4Kodi(self, movieId, lang):
+    def getMovieDetail4Kodi(self, movieId, lang, imageSrc):
         try:
             movieId = str(movieId)
             lang = str(lang)
@@ -176,8 +176,6 @@ if __name__ == '__main__':
         reload(sys)
         sys.setdefaultencoding('utf-8')
         
-        print datetime.now()
-        
         # Logger 초기화
         SVC_NAME = 'DUMMY'
         #LOG_FORMAT = '[%(asctime)-15s][%(name)s][%(module)s:%(funcName)s][%(levelname)s] %(message)s'
@@ -206,8 +204,8 @@ if __name__ == '__main__':
             logger.debug('title={0}'.format(title))
             
             # 상세정보 조회
-            detailJson = scraper.getMovieDetail4Kodi(movieId, lang)
+            detailJson = scraper.getMovieDetail4Kodi(movieId, lang, '')
             logger.debug('')
         
     except Exception as e:
-        logger.error(str(e))
+        print str(e)

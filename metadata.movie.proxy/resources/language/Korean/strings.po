@@ -17,13 +17,21 @@ msgstr ""
 "Plural-Forms: nplurals=1; plural=0;\n"
 
 msgctxt "#30000"
+msgid "IP Address of ProxyScraper"
+msgstr "ProxyScraper IP주소"
+
+msgctxt "#30010"
 msgid "Language Preference"
 msgstr "선호 언어"
 
-msgctxt "#30001"
+msgctxt "#30020"
 msgid "Meta Data Source"
 msgstr "메타 데이터를 가져올 사이트"
 
-msgctxt "#30002"
-msgid "IP Address of ProxyScraper"
-msgstr "ProxyScraper IP주소"
+msgctxt "#30030"
+msgid "Title Display Format"
+msgstr "제목 표시 형식"
+
+msgctxt "#30040"
+msgid "Use Images of TheMovieDB.org"
+msgstr "Daum 검색 결과에 TheMovieDB.org 이미지 사용"

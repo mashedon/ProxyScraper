@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import copy
+import httplib
 #import json
 import simplejson as json
 import logging
@@ -95,6 +96,19 @@ class MockScraper(object):
             self._log_err('{0}.{1}: {2}'.format(self.__class__.__name__, sys._getframe().f_code.co_name, str(e)))
             return None
     
+
+    def _nvl(self, val1, val2):
+        try:
+            if (val1 is not None) and (len(val1) > 0):
+                return val1
+            elif (val2 is not None) and (len(val2) > 0):
+                return val2
+            else:
+                return ''
+        except Exception as e: 
+            self._log_err('{0}.{1}: {2}'.format(self.__class__.__name__, sys._getframe().f_code.co_name, str(e)))
+            return None
+
     
     def _html_escape(self, text):
         html_escape_table = {
@@ -124,6 +138,37 @@ class MockScraper(object):
         return plot
         
         
+    def _title_format(self, eno, lang):
+        try:
+            if (lang == 'ko'):
+                return '제 {0}화'.format(eno)
+            else:
+                return 'Episode {0}'.format(eno)
+            
+        except Exception as e:
+            return ''
+        
+    def _year_filter(self, releaseYear, searchYear):
+        try:
+            if (searchYear is None) or (len(searchYear) != 4):
+                return True
+            
+            if (re.sub('[0-9]+', '', searchYear) != ''):
+                return True
+            
+            # 제작년도의 오차가 있어 +-1년까지는 허용
+            releaseYear = int(releaseYear)
+            for i in range(int(searchYear)-1, int(searchYear)+2):
+                if (releaseYear == i):
+                    return True
+            
+            return False
+            
+        except Exception as e:
+            self._log_err('{0}.{1}: {2}'.format(self.__class__.__name__, sys._getframe().f_code.co_name, str(e)))
+            return True
+        
+        
     def _regex_find(self, regexStr, text, option = None):
         try:
             if option:
@@ -144,17 +189,6 @@ class MockScraper(object):
             return []
 
 
-    def _title_format(self, eno, lang):
-        try:
-            if (lang == 'ko'):
-                return '제 {0}화'.format(eno)
-            else:
-                return 'Episode {0}'.format(eno)
-            
-        except Exception as e:
-            return ''
-        
-        
     def cache_clear(self):
         try:
             if (not os.path.isdir(self.cacheDir)):
@@ -266,7 +300,7 @@ class MockScraper(object):
 
 
     # 영화 상세정보 조회
-    def getMovieDetail4Kodi(self, movieId, lang):
+    def getMovieDetail4Kodi(self, movieId, lang, imageSrc):
         try:
             kodiDetailDict = json.loads(self.kodiDetailJson, object_pairs_hook=OrderedDict)
             fanartDictTemplate = json.loads(self.kodiFanartJson, object_pairs_hook=OrderedDict)
@@ -562,6 +596,16 @@ if __name__ == '__main__':
         reload(sys)
         sys.setdefaultencoding('utf-8')
         
+#         # Google 검색 테스트
+#         url = '/search?q=site:themoviedb.org+매트릭스'
+#         c = httplib.HTTPSConnection("www.google.co.kr")
+#         c.request("GET", url)
+#         response = c.getresponse()
+#         print response.status, response.reason
+#         data = response.read()
+#         print data
+#         exit()
+        
         # Logger 초기화
         SVC_NAME = 'MOCK'
         #LOG_FORMAT = '[%(asctime)-15s][%(name)s][%(module)s:%(funcName)s][%(levelname)s] %(message)s'
@@ -572,26 +616,28 @@ if __name__ == '__main__':
         logger = logging.getLogger(SVC_NAME)
         logger.info('==[STARTED]======================================')
         
-#         # 영화 검색
-#         query = '배트맨 대 슈퍼맨'
-#         year = ''
-#         lang = 'ko'
-#         scraper = MockScraper(SVC_NAME)
-#         listJson = scraper.findMovies4Kodi(query, year, lang)
-#         logger.debug('')
-#           
-#         listDict = json.loads(listJson, object_pairs_hook=OrderedDict)
-#         logger.debug(listDict)
-#         for resultDict in listDict['results']:
-#             # 검색결과에서 영화ID 추출
-#             movieId = resultDict['entity']['id']
-#             logger.debug('movieId={0}'.format(movieId))
-#             title = resultDict['entity']['title']
-#             logger.debug('title={0}'.format(title))
-#               
-#             # 상세정보 조회
-#             detailJson = scraper.getMovieDetail4Kodi(movieId, lang)
-#             logger.debug('')
+        # 영화 검색
+        query = '배트맨 대 슈퍼맨'
+        year = ''
+        lang = 'ko'
+        scraper = MockScraper(SVC_NAME)
+        listJson = scraper.findMovies4Kodi(query, year, lang)
+        logger.debug('')
+           
+        listDict = json.loads(listJson, object_pairs_hook=OrderedDict)
+        logger.debug(listDict)
+        for resultDict in listDict['results']:
+            # 검색결과에서 영화ID 추출
+            movieId = resultDict['entity']['id']
+            logger.debug('movieId={0}'.format(movieId))
+            title = resultDict['entity']['title']
+            logger.debug('title={0}'.format(title))
+               
+            # 상세정보 조회
+            detailJson = scraper.getMovieDetail4Kodi(movieId, lang, '')
+            logger.debug('')
+            
+        exit()
     
         # TV쇼 검색
         query = '왕좌의 게임'
@@ -623,4 +669,4 @@ if __name__ == '__main__':
             logger.debug('')
     
     except Exception as e:
-        logger.error(str(e))
+        print str(e)

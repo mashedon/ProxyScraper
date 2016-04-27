@@ -1,6 +1,6 @@
 # Kodi Media Center language file
-# Addon Name: TV Scraper(Proxy)
-# Addon id: metadata.tv.proxy
+# Addon Name: Movie Scraper(Proxy)
+# Addon id: metadata.movie.proxy
 # Addon Provider: mashedon@gmail.com
 msgid ""
 msgstr ""
@@ -17,13 +17,17 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
 msgctxt "#30000"
+msgid "IP Address of ProxyScraper"
+msgstr ""
+
+msgctxt "#30010"
 msgid "Language Preference"
 msgstr ""
 
-msgctxt "#30001"
+msgctxt "#30020"
 msgid "Meta Data Source"
 msgstr ""
 
-msgctxt "#30002"
-msgid "IP Address of ProxyScraper"
+msgctxt "#30030"
+msgid "Title Display Format"
 msgstr ""

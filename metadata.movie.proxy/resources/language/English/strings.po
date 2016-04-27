@@ -17,13 +17,21 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
 msgctxt "#30000"
+msgid "IP Address of ProxyScraper"
+msgstr ""
+
+msgctxt "#30010"
 msgid "Language Preference"
 msgstr ""
 
-msgctxt "#30001"
+msgctxt "#30020"
 msgid "Meta Data Source"
 msgstr ""
 
-msgctxt "#30002"
-msgid "IP Address of ProxyScraper"
+msgctxt "#30030"
+msgid "Title Display Format"
+msgstr ""
+
+msgctxt "#30040"
+msgid "Use Images of TheMovieDB.org"
 msgstr ""
